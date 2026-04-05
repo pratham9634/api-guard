@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import config from "./config.js";
+import config from "./index.js";
 import logger from "./logger.js";
 
 class MongoConnection {
@@ -16,8 +16,6 @@ class MongoConnection {
         
             await mongoose.connect(config.mongo.mongo_url,{
                 dbName: config.mongo.mongo_db_name,
-                useNewUrlParser: true,
-                useUnifiedTopology: true,
             }) 
 
             this.connection = mongoose.connection;

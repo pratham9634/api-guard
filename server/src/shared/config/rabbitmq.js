@@ -1,5 +1,5 @@
 import amqp from "amqplib";
-import config from "./config.js";
+import config from "./index.js";
 import logger from "./logger.js";
 
 class RabbitMqConnection{
@@ -79,10 +79,10 @@ class RabbitMqConnection{
     }
 
     getStatus() {
-        if (!this.connect || !this.channel) return "disconnected";
-        if (this.connect.closing) return "closing";
-        return "connected"
-    }
+    if (!this.connection || !this.channel) return "disconnected";
+    if (this.connection?.closing) return "closing";
+    return "connected";
+}
 
     async close(){
         try{
