@@ -8,7 +8,7 @@ const config = {
 
     //mongodb
     mongo : {
-        mongo_url: process.env.MONGO_URL || "mongodb://localhost:27017/api_guard",
+        mongo_url: process.env.MONGO_URI || process.env.MONGO_URL || "mongodb://localhost:27017/api_guard",
         mongo_db_name: process.env.MONGO_DB_NAME || "api_guard",
     },
 
@@ -20,11 +20,11 @@ const config = {
 
     //postress
     postgres: {
-        host : process.env.POSTGRES_HOST || "localhost",
-        port : parseInt(process.env.POSTGRES_PORT || 5432,10),
-        user : process.env.POSTGRES_USER || "postgres",
-        password : process.env.POSTGRES_PASSWORD || "postgres",
-        database : process.env.POSTGRES_DB || "api_guard",
+        host : process.env.PG_HOST || process.env.POSTGRES_HOST || "localhost",
+        port : parseInt(process.env.PG_PORT || process.env.POSTGRES_PORT || 5432,10),
+        user : process.env.PG_USER || process.env.POSTGRES_USER || "postgres",
+        password : process.env.PG_PASSWORD || process.env.POSTGRES_PASSWORD || "postgres",
+        database : process.env.PG_DATABASE || process.env.POSTGRES_DB || "api_guard",
     },
 
     //rabbitmq

@@ -1,4 +1,4 @@
-import ResponseFormatter from "../../shared/utils/responseFormatter.js"
+import ResponseFormatter from "../utils/responseFormatter.js"
 
 const validate = (schema) => (req, res, next) => {
     if (!schema) {
