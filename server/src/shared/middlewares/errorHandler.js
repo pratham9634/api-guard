@@ -1,5 +1,5 @@
 import logger from "../config/logger.js";
-import ResponseFormatter from "../utils/ResponseFormatter.js";
+import ResponseFormatter from "../utils/responseFormatter.js";
 
 async function errorHandler(err, req, res, next) {
     const statusCode = err.statusCode || 500;
