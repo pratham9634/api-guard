@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
-import SecurityUtils from "../utils/SecurityUtils";
-import bcrypt from "bcrypt";
+import SecurityUtils from "../utils/SecurityUtils.js";
+import bcrypt from "bcryptjs";
+import { ROLES } from "../constants/roles.js";
 
 const userSchema = new mongoose.Schema({
     username : {
@@ -92,15 +93,18 @@ const userSchema = new mongoose.Schema({
     collection : "users",
 });
 
-userSchema.pre("save", async function(next){
-    if(!this.isModified("password")) return next();
-    try{
-        this.password = await SecurityUtils.hashPassword(this.password);
+userSchema.pre('save', async function (next) {
+    if (!this.isModified('password')) {
+        return next();
+    }
+
+    try {
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
         next();
-    }catch(error){
+    } catch (error) {
         next(error);
     }
-    
 });
 
 userSchema.index({clientId : 1, isActive : 1});

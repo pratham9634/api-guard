@@ -7,27 +7,44 @@ import mongodb from './shared/config/mongodb.js';
 import postgres from './shared/config/postgres.js';
 import rabbitmq from './shared/config/rabbitmq.js';
 import errorHandler from './shared/middlewares/errorHandler.js';
-import ResponseFormatter from './shared/utils/ResponseFormatter.js';
+import ResponseFormatter from './shared/utils/responseFormatter.js';
 import cookieParser from "cookie-parser"
 
+// Routers
+import authRouter from "./services/auth/routes/authRouter.js"
 
-
+/**
+ * Initialize Express app
+ */
 const app = express();
 
+/**
+ * Middlewares
+ */
 app.use(helmet());
 app.use(cors({
     origin: true,
-    credentials: true,
+    credentials: true
 }));
+app.use(cookieParser())
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
 
-app.use((req,res,next)=>{
-    logger.info(`${req.method} ${req.url} ${req.ip} ${req.headers['user-agent']} ${new Date().toISOString()}`);
-    next();
+/**
+ * Request logging middleware
+ * Logs the HTTP method, path, IP address, and user agent for each incoming request.
+ */
+app.use((req, res, next) => {
+    logger.info(`${req.method} ${req.path}`, {
+        ip: req.ip,
+        userAgent: req.headers['user-agent']
+    });
+    next()
 })
 
+/**
+ * Health check endpoint
+ */
 app.get('/health', (req, res) => {
     res.status(200).json(
         ResponseFormatter.success(
@@ -41,7 +58,10 @@ app.get('/health', (req, res) => {
     );
 });
 
-
+/**
+ * Root endpoint
+ * Provides basic information about the API service and available endpoints.
+ */
 app.get("/", (req, res) => {
     res.status(200).json(
         ResponseFormatter.success(
@@ -60,36 +80,47 @@ app.get("/", (req, res) => {
     )
 });
 
-app.use((req,res)=>{
-    res.status(404).json(
-        ResponseFormatter.error(
-            {
-                status: 'not found',
-                timestamp: new Date().toISOString(),
-            },
-            'Endpoint not found'
-        )
-    );
-});
+/**
+ * API Routes
+ */
+app.use("/api/auth", authRouter)
 
-app.use(errorHandler);
+/**
+ * 404 Handler
+ */
+app.use((req, res) => {
+    res.status(404).json(ResponseFormatter.error("Endpoint not found", 404))
+})
 
-async function initializeConnections(){
+app.use(errorHandler)
+
+/**
+ * Initialize database connections and start the server
+ */
+async function initializeConnection() {
     try {
-        logger.info("Initializing connections...");
+        logger.info("Initializing database connections...");
+
+        // Connect to MongoDB;
         await mongodb.connect();
-        await rabbitmq.connect();
+
+        // Connect to PG;
         await postgres.testConnection();
+
+        // Connect to RabbitMQ;
+        await rabbitmq.connect();
+
         logger.info("All connections established successfully");
     } catch (error) {
-        logger.error("Failed to establish connections", error);
-        process.exit(1);
+        logger.error("Failed to initialize connections:", error);
+        throw error;
     }
 }
 
+
 async function startServer() {
     try {
-        await initializeConnections();
+        await initializeConnection();
 
         const server = app.listen(config.port, () => {
             logger.info(`Server started on port ${config.port}`);
