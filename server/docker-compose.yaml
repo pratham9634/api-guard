@@ -121,6 +121,39 @@ services:
       timeout: 10s
       retries: 5
 
+  api_guard_consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile.consumer
+    container_name: api_guard_consumer
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 5001
+      # MongoDB (local container)
+      MONGO_URI: mongodb://mongodb:27017/api_guard
+      MONGO_DB_NAME: api_guard
+      # PostgreSQL (Docker container)
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_DATABASE: api_guard
+      PG_USER: postgres
+      PG_PASSWORD: pratham
+      # RabbitMQ (Docker container)
+      RABBITMQ_URL: amqp://api_guard:api_guard_secret@rabbitmq:5672/api_guard_vhost
+      RABBITMQ_QUEUE: api_hits
+      # Security
+      JWT_SECRET: ${JWT_SECRET}
+    networks:
+      - api_guard_network
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
 volumes:
   postgres_data:
     driver: local
