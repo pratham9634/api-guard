@@ -287,4 +287,257 @@ export class ClientService {
             throw error;
         }
     }
+
+
+        /**
+     * Get all clients or user's own client
+     * @param {Object} user - The logged in user
+     * @returns {Promise<Array>} - List of clients
+     */
+    async getClients(user) {
+        try {
+            if (user.role === APPLICATION_ROLES.SUPER_ADMIN) {
+                return await this.clientRepository.find({ isActive: true });
+            }
+
+            // Client users (admin, viewer) can only see their own client
+            if (!user.clientId) {
+                return [];
+            }
+            const client = await this.clientRepository.findById(user.clientId);
+            return client ? [client] : [];
+        } catch (error) {
+            logger.error('Error getting clients:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get details of a single client
+     * @param {String} clientId - The client ID
+     * @param {Object} user - The logged in user
+     * @returns {Promise<Object>} - The client details
+     */
+    async getClientById(clientId, user) {
+        try {
+            if (!this.canUserAccessClient(user, clientId)) {
+                throw new AppError("Access denied", 403);
+            }
+
+            const client = await this.clientRepository.findById(clientId);
+            if (!client) {
+                throw new AppError("Client not found", 404);
+            }
+
+            return client;
+        } catch (error) {
+            logger.error('Error getting client details:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Update client details
+     * @param {String} clientId - The client ID
+     * @param {Object} updateData - Data to update (name, description, settings, website, email)
+     * @param {Object} user - The logged in user
+     * @returns {Promise<Object>} - The updated client
+     */
+    async updateClient(clientId, updateData, user) {
+        try {
+            const isSuperAdmin = user.role === APPLICATION_ROLES.SUPER_ADMIN;
+            const isClientAdmin = user.role === APPLICATION_ROLES.CLIENT_ADMIN && 
+                                  user.clientId && user.clientId.toString() === clientId.toString();
+
+            if (!isSuperAdmin && !isClientAdmin) {
+                throw new AppError("Access denied - Insufficient permissions to update client", 403);
+            }
+
+            const client = await this.clientRepository.findById(clientId);
+            if (!client) {
+                throw new AppError("Client not found", 404);
+            }
+
+            const fieldsToUpdate = {};
+
+            // Regenerate slug if name changes and ensure unique slug
+            if (updateData.name && updateData.name !== client.name) {
+                const slug = this.generateSlug(updateData.name);
+                const existingClient = await this.clientRepository.findBySlug(slug);
+                if (existingClient && existingClient._id.toString() !== clientId.toString()) {
+                    throw new AppError(`Client with slug ${slug} already exists`, 400);
+                }
+                fieldsToUpdate.name = updateData.name;
+                fieldsToUpdate.slug = slug;
+            }
+
+            if (updateData.description !== undefined) {
+                fieldsToUpdate.description = updateData.description;
+            }
+
+            if (updateData.website !== undefined) {
+                fieldsToUpdate.website = updateData.website;
+            }
+
+            if (updateData.email !== undefined) {
+                fieldsToUpdate.email = updateData.email;
+            }
+
+            if (updateData.settings) {
+                fieldsToUpdate.settings = {
+                    ...client.settings,
+                    ...updateData.settings
+                };
+            }
+
+            const updatedClient = await this.clientRepository.update(clientId, fieldsToUpdate);
+            return updatedClient;
+        } catch (error) {
+            logger.error('Error updating client:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Deactivate client (soft delete)
+     * @param {String} clientId - The client ID
+     * @param {Object} user - The logged in user
+     * @returns {Promise<Object>} - The updated client
+     */
+    async deactivateClient(clientId, user) {
+        try {
+            if (user.role !== APPLICATION_ROLES.SUPER_ADMIN) {
+                throw new AppError("Access denied - Only Super Admin can deactivate clients", 403);
+            }
+
+            const client = await this.clientRepository.findById(clientId);
+            if (!client) {
+                throw new AppError("Client not found", 404);
+            }
+
+            const updatedClient = await this.clientRepository.update(clientId, { isActive: false });
+            return updatedClient;
+        } catch (error) {
+            logger.error('Error deactivating client:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * List users belonging to a specific client
+     * @param {String} clientId - The client ID
+     * @param {Object} user - The logged in user
+     * @returns {Promise<Array>} - List of client users
+     */
+    async getClientUsers(clientId, user) {
+        try {
+            if (!this.canUserAccessClient(user, clientId)) {
+                throw new AppError("Access denied", 403);
+            }
+
+            const client = await this.clientRepository.findById(clientId);
+            if (!client) {
+                throw new AppError("Client not found", 404);
+            }
+
+            const users = await this.userRepository.findByClientId(clientId);
+            return users;
+        } catch (error) {
+            logger.error('Error getting client users:', error);
+            throw error;
+        }
+    }
+
+        /**
+     * Helper to validate API key management permission
+     */
+    validateApiKeyPermission(clientId, user) {
+        if (!this.canUserAccessClient(user, clientId)) {
+            throw new AppError("Access denied", 403);
+        }
+
+        if (!(user.role === APPLICATION_ROLES.SUPER_ADMIN || user.role === APPLICATION_ROLES.CLIENT_ADMIN)) {
+            throw new AppError("Access denied - Only Super Admin and Client Admin can manage API keys", 403);
+        }
+    }
+
+    /**
+     * Revoke/deactivate an API key
+     * @param {String} clientId - The client ID
+     * @param {String} keyId - The API key external ID (UUID)
+     * @param {Object} user - The logged in user
+     * @returns {Promise<Object>} - The updated API key
+     */
+    async revokeApiKey(clientId, keyId, user) {
+        try {
+            this.validateApiKeyPermission(clientId, user);
+
+            const apiKey = await this.apiKeyRepository.findByKeyId(keyId);
+            if (!apiKey || apiKey.clientId._id.toString() !== clientId.toString()) {
+                throw new AppError("API Key not found for this client", 404);
+            }
+
+            const updatedKey = await this.apiKeyRepository.update(keyId, { isActive: false });
+            return updatedKey;
+        } catch (error) {
+            logger.error("Error revoking API key:", error);
+            throw error;
+        }
+    }
+
+    /**
+     * Rotate an API key (generate new value, updates security.lastRotated)
+     * @param {String} clientId - The client ID
+     * @param {String} keyId - The API key external ID (UUID)
+     * @param {Object} user - The logged in user
+     * @returns {Promise<Object>} - The rotated API key
+     */
+    async rotateApiKey(clientId, keyId, user) {
+        try {
+            this.validateApiKeyPermission(clientId, user);
+
+            const apiKey = await this.apiKeyRepository.findByKeyId(keyId);
+            if (!apiKey || apiKey.clientId._id.toString() !== clientId.toString()) {
+                throw new AppError("API Key not found for this client", 404);
+            }
+
+            const newKeyValue = this.generateApiKey();
+            const updateFields = {
+                keyValue: newKeyValue,
+                "security.lastRotated": new Date()
+            };
+
+            const rotatedKey = await this.apiKeyRepository.update(keyId, updateFields);
+            return rotatedKey;
+        } catch (error) {
+            logger.error("Error rotating API key:", error);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete an API key
+     * @param {String} clientId - The client ID
+     * @param {String} keyId - The API key external ID (UUID)
+     * @param {Object} user - The logged in user
+     * @returns {Promise<Boolean>} - True if deleted successfully
+     */
+    async deleteApiKey(clientId, keyId, user) {
+        try {
+            this.validateApiKeyPermission(clientId, user);
+
+            const apiKey = await this.apiKeyRepository.findByKeyId(keyId);
+            if (!apiKey || apiKey.clientId._id.toString() !== clientId.toString()) {
+                throw new AppError("API Key not found for this client", 404);
+            }
+
+            const deleted = await this.apiKeyRepository.delete(keyId);
+            return deleted;
+        } catch (error) {
+            logger.error("Error deleting API key:", error);
+            throw error;
+        }
+    }
+
+
 }

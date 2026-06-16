@@ -9,7 +9,7 @@ const authorize = (allowedRoles=[]) => (req,res,next)=>{
 
         // skip
         if (allowedRoles.length === 0) {
-            next()
+            return next()
         };
 
         if (!allowedRoles.includes(req.user.role)) {

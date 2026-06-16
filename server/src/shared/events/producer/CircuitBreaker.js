@@ -48,7 +48,7 @@ export class CircuitBreaker{
     }
 
     _reset(){
-        this.state = CircuitState.CLOSED;
+        this._state = CircuitState.CLOSED;
         this._failures = 0;
         this._halfOpenAttempts = 0;
         this._halfOpenSuccesses = 0;
@@ -112,8 +112,8 @@ export class CircuitBreaker{
             return;
         }
 
-        if(this._failure>0){
-            this._failure = 0;
+        if(this._failures>0){
+            this._failures = 0;
             this.logger.info('[CircuitBreaker] failures reset to 0');
         }
     };
@@ -131,7 +131,7 @@ export class CircuitBreaker{
             return;
         }
 
-        this._failure++;
+        this._failures++;
         this._lastFailureTime = Date.now();
 
         this.logger.info(`[CircuitBreaker] failure count: ${this._failures}/${this.failureThreshold}`);

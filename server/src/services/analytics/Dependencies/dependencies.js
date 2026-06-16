@@ -2,7 +2,7 @@ import clientRepository from '../../client/repository/ClientRepository.js';
 import processorContainer from '../../processor/Dependencies/dependencies.js';
 import authContainer from '../../auth/Dependencies/dependencies.js';
 
-import { AnalyticsService } from '../services/analyticsService.js';
+import { AnalyticsService } from '../services/analyticService.js';
 import { AnalyticsController } from '../controller/analyticsController.js';
 
 /**

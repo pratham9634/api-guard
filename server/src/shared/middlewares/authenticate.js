@@ -15,9 +15,9 @@ const authenticate = (req,res,next)=>{
             return res.status(401).json(ResponseFormatter.error("Authentication token is required", 401))
         }
 
-        const decodedToken = jwt.verify(token, config.jwt.secret);
+        const decodedToken = jwt.verify(token, config.jwt.jwt_secret);
 
-        const { userId, email, username, role, clientId } = decoded;
+        const { userId, email, username, role, clientId } = decodedToken;
 
         req.user = {
             userId, email, username, role, clientId

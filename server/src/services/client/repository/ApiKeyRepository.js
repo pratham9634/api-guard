@@ -58,5 +58,42 @@ class MongoApiKeyRepository extends BaseApiKeyRepository {
             throw error;
         }
     }
+
+    async findByKeyId(keyId) {
+    try {
+        const apiKey = await this.model.findOne({ keyId }).populate('clientId');
+        return apiKey;
+    } catch (error) {
+        logger.error('Error finding API key by keyId:', error);
+        throw error;
+    }
+}
+
+async update(keyId, updateData) {
+    try {
+        const apiKey = await this.model.findOneAndUpdate(
+            { keyId },
+            { $set: updateData },
+            { new: true, runValidators: true }
+        );
+        logger.info(`API Key updated successfully: ${keyId}`);
+        return apiKey;
+    } catch (error) {
+        logger.error(`Error updating API Key: ${error.message}`);
+        throw error;
+    }
+}
+
+async delete(keyId) {
+    try {
+        const result = await this.model.deleteOne({ keyId });
+        logger.info(`API Key deleted successfully: ${keyId}`);
+        return result.deletedCount > 0;
+    } catch (error) {
+        logger.error(`Error deleting API Key: ${error.message}`);
+        throw error;
+    }
+}
+
 }
 export default new MongoApiKeyRepository();

@@ -72,6 +72,28 @@ class MongoUserRepository extends BaseRepository {
             throw error;
         }
     }
+
+    async findByClientId(clientId){
+        try{
+            const user = await this.model.find({clientId:clientId}).select("-password");
+            
+            return user;
+        } catch(error){
+            logger.error("Error finding user by client id", error)
+            throw error;
+        }
+    }
+
+    async findAllWithInactive() {
+    try {
+        const users = await this.model.find().select("-password");
+        return users;
+    } catch (error) {
+        logger.error("Error finding all users including inactive", error);
+        throw error;
+    }
+}
+
 }
 
 export default new MongoUserRepository()

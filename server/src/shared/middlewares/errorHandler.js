@@ -2,9 +2,9 @@ import logger from "../config/logger.js";
 import ResponseFormatter from "../utils/responseFormatter.js";
 
 async function errorHandler(err, req, res, next) {
-    const statusCode = err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-    const error = err.error || null;
+    let statusCode = err.statusCode || 500;
+    let message = err.message || "Internal Server Error";
+    let error = err.error || null;
 
     logger.error("Error occured",{
         message : err.message,
@@ -17,7 +17,7 @@ async function errorHandler(err, req, res, next) {
     if (err.name === "ValidationError") {
         statusCode = 400;
         message = "Validation Error";
-        errors = Object.values(err.errors).map((e) => e.message)
+        error = Object.values(err.errors).map((e) => e.message)
     } else if (err.name === 'MongoServerError' && err.code === 11000) {
         statusCode = 409;
         message = 'Duplicate key error';

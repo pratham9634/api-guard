@@ -3,6 +3,7 @@ import AppError from "../../../shared/utils/AppError.js";
 import jwt from "jsonwebtoken";
 import logger from "../../../shared/config/logger.js"
 import bcrypt from "bcryptjs";
+import { APPLICATION_ROLES ,isValidRole } from "../../../shared/constants/roles.js";
 
 export class AuthService {
     constructor(userRepository){
@@ -147,4 +148,131 @@ export class AuthService {
             throw error
         }
     };
+
+        /**
+     * Update logged in user's profile details
+     * @param {String} userId - The user ID to update
+     * @param {Object} updateData - Fields to update (username, email, password)
+     * @returns {Promise<Object>} - Formatted user object
+     */
+    async updateProfile(userId, updateData) {
+        try {
+            const user = await this.userRepository.findById(userId);
+            if (!user) {
+                throw new AppError("User not found", 404);
+            }
+
+            if (updateData.username) {
+                const existingUser = await this.userRepository.findByUsername(updateData.username);
+                if (existingUser && existingUser._id.toString() !== userId.toString()) {
+                    throw new AppError("Username already exists", 409);
+                }
+                user.username = updateData.username;
+            }
+
+            if (updateData.email) {
+                const existingEmail = await this.userRepository.findByEmail(updateData.email);
+                if (existingEmail && existingEmail._id.toString() !== userId.toString()) {
+                    throw new AppError("Email already exists", 409);
+                }
+                user.email = updateData.email;
+            }
+
+            if (updateData.password) {
+                user.password = updateData.password; // Auto-hashed by userSchema.pre('save') hook
+            }
+
+            await user.save();
+            return this.formatUserForResponse(user);
+        } catch (error) {
+            logger.error("Error updating profile:", error);
+            throw error;
+        }
+    }
+
+    /**
+     * List all system users (super_admin only)
+     */
+    async getAllUsers(adminUser) {
+        try {
+            if (adminUser.role !== APPLICATION_ROLES.SUPER_ADMIN) {
+                throw new AppError("Access denied - Super Admin only", 403);
+            }
+
+            const users = await this.userRepository.findAllWithInactive();
+            return users;
+        } catch (error) {
+            logger.error("Error listing all users:", error);
+            throw error;
+        }
+    }
+
+    /**
+     * Activate or deactivate a user status
+     */
+    async updateUserStatus(userId, isActive, adminUser) {
+        try {
+            if (adminUser.role !== APPLICATION_ROLES.SUPER_ADMIN) {
+                throw new AppError("Access denied - Super Admin only", 403);
+            }
+
+            const user = await this.userRepository.findById(userId);
+            if (!user) {
+                throw new AppError("User not found", 404);
+            }
+
+            user.isActive = isActive;
+            await user.save();
+            return this.formatUserForResponse(user);
+        } catch (error) {
+            logger.error("Error updating user status:", error);
+            throw error;
+        }
+    }
+
+    /**
+     * Update user role and dynamically adjust permissions
+     */
+    async updateUserRole(userId, role, adminUser) {
+        try {
+            if (adminUser.role !== APPLICATION_ROLES.SUPER_ADMIN) {
+                throw new AppError("Access denied - Super Admin only", 403);
+            }
+
+            if (!isValidRole(role)) {
+                throw new AppError("Invalid role specified", 400);
+            }
+
+            const user = await this.userRepository.findById(userId);
+            if (!user) {
+                throw new AppError("User not found", 404);
+            }
+
+            user.role = role;
+
+            // Dynamically adjust default permissions based on the new role
+            if (role === APPLICATION_ROLES.SUPER_ADMIN || role === APPLICATION_ROLES.CLIENT_ADMIN) {
+                user.permissions = {
+                    canCreateApiKeys: true,
+                    canManageUsers: true,
+                    canViewAnalytics: true,
+                    canExportData: true,
+                };
+            } else {
+                user.permissions = {
+                    canCreateApiKeys: false,
+                    canManageUsers: false,
+                    canViewAnalytics: true,
+                    canExportData: false,
+                };
+            }
+
+            await user.save();
+            return this.formatUserForResponse(user);
+        } catch (error) {
+            logger.error("Error updating user role:", error);
+            throw error;
+        }
+    }
+
 }

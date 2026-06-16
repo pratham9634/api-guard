@@ -52,7 +52,7 @@ export class ConfirmChannelManager extends EventEmitter{
                 this._channel = null;
             })
 
-            confirmChannel.on("error",(error)=>{
+            confirmChannel.on("error",(err)=>{
                  this._logger.error('[ChannelManager] confirm channel error', {
                     error: err.message,
                     stack: err.stack,
