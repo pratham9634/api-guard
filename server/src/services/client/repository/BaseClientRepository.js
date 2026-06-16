@@ -23,4 +23,8 @@ export default class BaseClientRepository {
     async count(filters) {
         throw new Error('Method not implemented');
     }
+
+    async update(clientId,updateData){
+        throw new Error("Method not implemented")
+    }
 }

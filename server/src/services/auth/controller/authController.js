@@ -91,4 +91,18 @@ export class AuthController {
             next(error)
         }
     }
+
+        /**
+     * Update logged-in user's own profile
+     */
+    async updateProfile(req, res, next) {
+        try {
+            const userId = req.user.userId;
+            const updatedUser = await this.authService.updateProfile(userId, req.body);
+            return res.status(200).json(ResponseFormatter.success(updatedUser, "Profile updated successfully", 200));
+        } catch (error) {
+            next(error);
+        }
+    }
+
 }

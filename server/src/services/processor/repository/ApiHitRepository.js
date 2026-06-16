@@ -28,7 +28,7 @@ export class ApiHitRepository extends BaseRepository{
     async find(filter={},options={}){
         try{
             const { limit = 100, skip = 0, sort = { timestamp: -1 } } = options;
-            const hits = await this.model.find(filer).sort(sort).limit(limit).skip(skip).lean();
+            const hits = await this.model.find(filter).sort(sort).limit(limit).skip(skip).lean();
 
             return hits;
         } catch(error){

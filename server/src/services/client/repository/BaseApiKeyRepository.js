@@ -21,4 +21,16 @@ export default class BaseApiKeyRepository {
         throw new Error('Method not implemented');
     }
 
+    async findByKeyId(keyId) {
+    throw new Error('Method not implemented');
+}
+
+async update(keyId, updateData) {
+    throw new Error('Method not implemented');
+}
+
+async delete(keyId) {
+    throw new Error('Method not implemented');
+}
+
 }

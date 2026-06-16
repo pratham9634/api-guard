@@ -11,8 +11,10 @@ export const CLIENT_ROLES = [
 
 export const APPLICATION_ROLES = {
     SUPER_ADMIN: "super_admin",
+    CLIENT_ADMIN: "client_admin",
     CLIENT_VIEWER: "client_viewer"
 }
+
 
 export const isValidClientRole = (role) => CLIENT_ROLES.includes(role);
 export const isValidRole = (role) => ROLES.includes(role);

@@ -26,7 +26,7 @@ export class EventProducer {
         this._metrics[metric] = (this._metrics[metric] ?? 0) + 1;
     }
 
-    async publishApiHit(enentData,opts={}){
+    async publishApiHit(eventData,opts={}){
         if (this._shuttingDown) {
             const error = new Error("EventProducer is shutting down");
             error.code = 'SHUTDOWN_IN_PROGRESS';
