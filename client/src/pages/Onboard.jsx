@@ -13,7 +13,7 @@ export default function Onboard() {
   const [loading, setLoading] = useState(false);
 
   if (authLoading) return null;
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+  if (isAuthenticated) return <Navigate to="/app/dashboard" replace />;
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -31,7 +31,7 @@ export default function Onboard() {
     try {
       await api.onboardSuperAdmin(form);
       await refreshProfile();
-      navigate('/dashboard');
+      navigate('/app/dashboard');
     } catch (err) {
       setError(err.message || 'Failed to create super admin');
     } finally {

@@ -108,7 +108,7 @@ export default function Clients() {
             <Plus size={18} /> Create Client
           </button>
         }
-        onRowClick={(row) => navigate(`/clients/${row._id}`)}
+        onRowClick={(row) => navigate(`/app/clients/${row._id}`)}
       />
 
       {/* Create Client Modal */}
