@@ -24,8 +24,8 @@ export class AuthService {
             clientId
         }
 
-        return jwt.sign(payload, config.jwt.secret, {
-            expiresIn: config.jwt.expiresIn
+        return jwt.sign(payload, config.jwt.jwt_secret, {
+            expiresIn: config.jwt.jwt_expires_in
         })
     }
 

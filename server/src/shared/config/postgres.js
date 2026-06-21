@@ -25,8 +25,8 @@ class PostgresConnection{
                 logger.error("Unexpected error on postgres client",err);
             })
             logger.info("Postress pool created")
-            return this.pool;
         }
+         return this.pool;
     }
 
     async testConnection(){

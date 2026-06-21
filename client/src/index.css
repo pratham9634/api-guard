@@ -1,0 +1,123 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+/* ── Tailwind v4 Theme (CSS-based config) ── */
+@theme {
+  /* Accent colors — Indigo → Violet */
+  --color-accent-primary: hsl(245, 80%, 65%);
+  --color-accent-secondary: hsl(275, 75%, 65%);
+
+  /* Dark surfaces */
+  --color-surface-primary: hsl(225, 25%, 8%);
+  --color-surface-secondary: hsl(225, 20%, 12%);
+  --color-surface-card: hsl(225, 18%, 14%);
+  --color-surface-card-hover: hsl(225, 18%, 17%);
+  --color-surface-elevated: hsl(225, 16%, 18%);
+  --color-surface-input: hsl(225, 20%, 10%);
+
+  /* Glass */
+  --color-glass-bg: hsla(225, 20%, 16%, 0.6);
+  --color-glass-border: hsla(225, 30%, 30%, 0.3);
+
+  /* Text */
+  --color-text-primary: hsl(220, 20%, 95%);
+  --color-text-secondary: hsl(220, 15%, 65%);
+  --color-text-tertiary: hsl(220, 10%, 45%);
+
+  /* Borders */
+  --color-border: hsl(225, 15%, 20%);
+  --color-border-light: hsl(225, 15%, 25%);
+
+  /* Semantic */
+  --color-success: hsl(152, 68%, 52%);
+  --color-success-bg: hsla(152, 68%, 52%, 0.12);
+  --color-warning: hsl(38, 92%, 60%);
+  --color-warning-bg: hsla(38, 92%, 60%, 0.12);
+  --color-danger: hsl(0, 78%, 62%);
+  --color-danger-bg: hsla(0, 78%, 62%, 0.12);
+  --color-info: hsl(210, 90%, 65%);
+  --color-info-bg: hsla(210, 90%, 65%, 0.12);
+
+  /* Sidebar / Topbar */
+  --spacing-sidebar: 260px;
+  --spacing-topbar: 64px;
+
+  /* Font family */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /* Animations */
+  --animate-fade-in: fade-in 0.35s ease forwards;
+  --animate-fade-in-up: fade-in-up 0.5s ease forwards;
+  --animate-spin-slow: spin 0.8s linear infinite;
+  --animate-shimmer: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ── Keyframes ── */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ── Global Base ── */
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--color-surface-primary);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: hsl(225, 15%, 25%); border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(225, 15%, 35%); }
+}
+
+/* ── Reusable Utilities ── */
+@utility accent-gradient {
+  background: linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-secondary));
+}
+
+@utility accent-gradient-hover {
+  background: linear-gradient(135deg, hsl(245, 85%, 70%), hsl(275, 80%, 70%));
+}
+
+@utility accent-glow {
+  box-shadow: 0 0 20px hsla(245, 80%, 65%, 0.3);
+}
+
+@utility accent-text {
+  background: linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@utility glass-card {
+  background: var(--color-glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-glass-border);
+}
+
+@utility stagger-1 { animation-delay: 0ms; }
+@utility stagger-2 { animation-delay: 60ms; }
+@utility stagger-3 { animation-delay: 120ms; }
+@utility stagger-4 { animation-delay: 180ms; }
+
+

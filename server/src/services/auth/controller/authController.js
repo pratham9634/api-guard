@@ -25,7 +25,8 @@ export class AuthController {
              res.cookie("authToken", token, {
                 httpOnly: config.cookie.httpOnly,
                 secure: config.cookie.secure,
-                maxAge: config.cookie.expiresIn
+                sameSite: config.cookie.sameSite,
+                maxAge: config.cookie.maxAge
             });
 
             res.status(201).json(ResponseFormatter.success(user, "Super admin created successfully", 201))

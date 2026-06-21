@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 
 class SecurityUtils {
     static PASSWORD_REQUIREMENTS = {

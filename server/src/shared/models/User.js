@@ -36,7 +36,7 @@ const userSchema = new mongoose.Schema({
         required : true,
         trim : true,
         minlength : 6,
-        maxlength : 30,
+        maxlength : 100,
         validate : {
             validator : function(v){
                 if(this.isModified('password')&& v && !v.startsWith('$2b$')){
@@ -93,18 +93,13 @@ const userSchema = new mongoose.Schema({
     collection : "users",
 });
 
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
     if (!this.isModified('password')) {
-        return next();
+        return;
     }
 
-    try {
-        const salt = await bcrypt.genSalt(10);
-        this.password = await bcrypt.hash(this.password, salt);
-        next();
-    } catch (error) {
-        next(error);
-    }
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
 });
 
 userSchema.index({clientId : 1, isActive : 1});

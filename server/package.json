@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "processor": "node src/modules/processor/consumer.js",
+    "processor": "node src/services/processor/consumer.js",
     "init": "node init-system.js",
     "init:env": "node init-system.js --generate-env"
   },
@@ -19,7 +19,6 @@
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
-    "crypto": "^1.0.1",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "express-rate-limit": "^8.3.2",
