@@ -1,0 +1,320 @@
+/* ══════════════════════════════════════════════════
+   API Guard — Landing Page Styles
+   ══════════════════════════════════════════════════ */
+
+/* ── Light Mode Theme Override ── */
+.light {
+  --color-surface-primary: #ffffff;
+  --color-surface-secondary: #f8fafc;
+  --color-surface-card: #f1f5f9;
+  --color-surface-card-hover: #e2e8f0;
+  --color-surface-elevated: #ffffff;
+  --color-surface-input: #f8fafc;
+
+  --color-glass-bg: rgba(255, 255, 255, 0.7);
+  --color-glass-border: rgba(148, 163, 184, 0.3);
+
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #94a3b8;
+
+  --color-border: #e2e8f0;
+  --color-border-light: #cbd5e1;
+
+  --color-accent-primary: #4f46e5;
+  --color-accent-secondary: #0891b2;
+}
+
+/* ── Grid Background ── */
+.landing-grid-bg {
+  background-image:
+    linear-gradient(rgba(79, 70, 229, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79, 70, 229, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+.light .landing-grid-bg {
+  background-image:
+    linear-gradient(rgba(79, 70, 229, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79, 70, 229, 0.06) 1px, transparent 1px);
+}
+
+/* ── Aurora Background ── */
+.aurora-bg {
+  position: relative;
+  overflow: hidden;
+}
+
+.aurora-bg::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(
+    from 180deg at 50% 50%,
+    rgba(79, 70, 229, 0.08) 0deg,
+    rgba(6, 182, 212, 0.05) 120deg,
+    rgba(16, 185, 129, 0.03) 240deg,
+    rgba(79, 70, 229, 0.08) 360deg
+  );
+  animation: aurora-rotate 25s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.light .aurora-bg::before {
+  background: conic-gradient(
+    from 180deg at 50% 50%,
+    rgba(79, 70, 229, 0.12) 0deg,
+    rgba(6, 182, 212, 0.08) 120deg,
+    rgba(16, 185, 129, 0.05) 240deg,
+    rgba(79, 70, 229, 0.12) 360deg
+  );
+}
+
+@keyframes aurora-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ── Gradient Mesh Background ── */
+.gradient-mesh {
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(79, 70, 229, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
+}
+
+.light .gradient-mesh {
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(79, 70, 229, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(6, 182, 212, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(16, 185, 129, 0.06) 0%, transparent 50%);
+}
+
+/* ── Glassmorphism Card ── */
+.glass-landing {
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 16px;
+}
+
+.light .glass-landing {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+/* ── Feature Card Glow ── */
+.feature-card {
+  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, transparent, transparent);
+  z-index: -1;
+  transition: background 0.3s ease;
+}
+
+.feature-card:hover::before {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.5), rgba(6, 182, 212, 0.5));
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(79, 70, 229, 0.15);
+}
+
+.light .feature-card:hover {
+  box-shadow: 0 20px 40px rgba(79, 70, 229, 0.1);
+}
+
+/* ── Code Block Syntax Highlighting ── */
+.code-block {
+  background: #0d1117;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 12px;
+  padding: 24px;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.7;
+  overflow-x: auto;
+  color: #e6edf3;
+}
+
+.code-block .keyword { color: #ff7b72; }
+.code-block .string { color: #a5d6ff; }
+.code-block .function { color: #d2a8ff; }
+.code-block .comment { color: #8b949e; font-style: italic; }
+.code-block .property { color: #79c0ff; }
+.code-block .operator { color: #ff7b72; }
+.code-block .number { color: #79c0ff; }
+.code-block .punctuation { color: #8b949e; }
+.code-block .method { color: #d2a8ff; }
+.code-block .variable { color: #ffa657; }
+.code-block .builtin { color: #ff7b72; }
+
+/* ── Pricing Card Highlight ── */
+.pricing-highlight {
+  position: relative;
+  z-index: 1;
+}
+
+.pricing-highlight::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, #4f46e5, #06b6d4, #4f46e5);
+  background-size: 200% 200%;
+  animation: gradient-shift 4s ease infinite;
+  z-index: -1;
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ── FAQ Accordion ── */
+.faq-answer {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s ease;
+}
+
+.faq-answer.open {
+  grid-template-rows: 1fr;
+}
+
+.faq-answer > div {
+  overflow: hidden;
+}
+
+/* ── Floating Animation ── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes float-delayed {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-delayed 5s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+/* ── Pulse Glow ── */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(79, 70, 229, 0.2); }
+  50% { box-shadow: 0 0 40px rgba(79, 70, 229, 0.4); }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* ── Gradient Text ── */
+.gradient-text {
+  background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 50%, #10b981 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-accent {
+  background: linear-gradient(135deg, #4f46e5, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Section Divider ── */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-border), transparent);
+}
+
+/* ── Architecture Flow Line ── */
+.flow-line {
+  stroke-dasharray: 8 4;
+  animation: flow-dash 1.5s linear infinite;
+}
+
+@keyframes flow-dash {
+  to { stroke-dashoffset: -24; }
+}
+
+/* ── Tab Indicator ── */
+.tab-indicator {
+  position: absolute;
+  bottom: -1px;
+  height: 2px;
+  background: linear-gradient(90deg, #4f46e5, #06b6d4);
+  border-radius: 1px;
+  transition: left 0.3s ease, width 0.3s ease;
+}
+
+/* ── Responsive Container ── */
+.landing-container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+@media (max-width: 640px) {
+  .landing-container {
+    padding: 0 16px;
+  }
+}
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .aurora-bg::before,
+  .animate-float,
+  .animate-float-delayed,
+  .animate-pulse-glow,
+  .flow-line,
+  .pricing-highlight::before {
+    animation: none !important;
+  }
+
+  .feature-card:hover {
+    transform: none;
+  }
+
+  .faq-answer {
+    transition: none;
+  }
+}
+
+/* ── Scrollbar for landing ── */
+.landing-page::-webkit-scrollbar {
+  width: 8px;
+}
+
+.landing-page::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.landing-page::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 9999px;
+}
+
+.landing-page::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}

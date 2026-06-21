@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppLayout from './components/Layout/AppLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleGuard from './components/RoleGuard';
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Onboard from './pages/Onboard';
 import Dashboard from './pages/Dashboard';
@@ -18,19 +19,20 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* Public routes */}
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/onboard" element={<Onboard />} />
 
         {/* Protected routes with layout */}
         <Route
-          path="/"
+          path="/app"
           element={
             <ProtectedRoute>
               <AppLayout />
             </ProtectedRoute>
           }
         >
-          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route index element={<Navigate to="/app/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="analytics" element={<Analytics />} />
           <Route
@@ -54,8 +56,11 @@ export default function App() {
           <Route path="profile" element={<Profile />} />
         </Route>
 
+        {/* Legacy redirects */}
+        <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
+
         {/* Catch all */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

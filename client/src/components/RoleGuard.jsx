@@ -5,7 +5,7 @@ export default function RoleGuard({ allowedRoles = [], children }) {
   const { role } = useAuth();
 
   if (allowedRoles.length > 0 && !allowedRoles.includes(role)) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/app/dashboard" replace />;
   }
 
   return children;

@@ -179,7 +179,7 @@ export default function ClientDetail() {
         <h3 className="text-lg font-semibold mb-4">Client not found</h3>
         <button
           className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 focus:outline-none disabled:opacity-50 disabled:pointer-events-none cursor-pointer select-none accent-gradient hover:accent-gradient-hover text-white accent-glow"
-          onClick={() => navigate('/clients')}
+          onClick={() => navigate('/app/clients')}
         >
           Back to Clients
         </button>
@@ -192,7 +192,7 @@ export default function ClientDetail() {
       {/* Header */}
       <button
         className="inline-flex items-center justify-center gap-2 px-3 py-1.5 mb-4 text-sm font-semibold rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-elevated/50 transition-colors duration-200 cursor-pointer focus:outline-none"
-        onClick={() => navigate('/clients')}
+        onClick={() => navigate('/app/clients')}
       >
         <ArrowLeft size={18} /> Back to Clients
       </button>

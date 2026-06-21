@@ -16,15 +16,15 @@ export default function Sidebar({ isOpen, onClose }) {
 
   const navItems = [
     { label: 'Overview', section: true },
-    { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/analytics', label: 'Analytics', icon: BarChart3 },
+    { to: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/app/analytics', label: 'Analytics', icon: BarChart3 },
     { label: 'Management', section: true, requireRole: ROLES.SUPER_ADMIN },
-    { to: '/clients', label: 'Clients', icon: Building2, requireRole: ROLES.SUPER_ADMIN },
-    { to: '/users', label: 'Users', icon: Users },
+    { to: '/app/clients', label: 'Clients', icon: Building2, requireRole: ROLES.SUPER_ADMIN },
+    { to: '/app/users', label: 'Users', icon: Users },
     { label: 'Security', section: true },
-    { to: '/api-keys', label: 'API Keys', icon: KeyRound },
+    { to: '/app/api-keys', label: 'API Keys', icon: KeyRound },
     { label: 'Account', section: true },
-    { to: '/profile', label: 'Profile', icon: UserCircle },
+    { to: '/app/profile', label: 'Profile', icon: UserCircle },
   ];
 
   const filteredItems = navItems.filter((item) => {
