@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend
 } from 'recharts';
-import { Activity, AlertTriangle, Clock, Layers } from 'lucide-react';
+import { Activity, AlertTriangle, Clock, Layers, Home, RefreshCw } from 'lucide-react';
 import * as api from '../api/client';
 import StatCard from '../components/StatCard';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -35,6 +36,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -74,7 +76,30 @@ export default function Dashboard() {
           <h1 className="text-2xl font-bold text-text-primary tracking-tight">Dashboard</h1>
           <p className="text-sm text-text-secondary mt-1">Real-time overview of your API performance</p>
         </div>
-        <div className="flex items-center gap-1.5 bg-surface-secondary p-1 border border-border rounded-lg">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => {
+              document.body.style.transition = 'opacity 300ms ease-in-out';
+              document.body.style.opacity = 0;
+              setTimeout(() => {
+                navigate('/');
+                document.body.style.opacity = 1;
+                setTimeout(() => { document.body.style.transition = ''; }, 300);
+              }, 300);
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-surface-secondary border border-border rounded-lg text-sm font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-elevated hover:-translate-y-1 hover:shadow-lg transition-all duration-300 focus:outline-none"
+          >
+            <Home size={18} /> Home
+          </button>
+          <button
+            onClick={fetchDashboard}
+            disabled={loading}
+            className="inline-flex items-center gap-2 px-3 py-2 bg-surface-secondary border border-border rounded-lg text-sm font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-elevated transition-colors duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Refresh Dashboard"
+          >
+            <RefreshCw size={18} className={loading ? 'animate-spin text-accent-primary' : ''} />
+          </button>
+          <div className="flex items-center gap-1.5 bg-surface-secondary p-1 border border-border rounded-lg">
           {TIME_RANGES.slice(0, 4).map((range) => (
             <button
               key={range.value}
@@ -90,6 +115,7 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
+    </div>
 
       {error && (
         <div className="flex items-center gap-2.5 p-3.5 mb-6 text-sm rounded-lg border bg-danger/10 border-danger/20 text-danger">

@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Menu, X } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import { useAuth } from '../../context/AuthContext';
+import RequestAccessModal from './RequestAccessModal';
 
 const NAV_LINKS = [
   { label: 'Features', href: '#features' },
@@ -14,6 +16,8 @@ const NAV_LINKS = [
 
 export default function Navbar({ theme, toggleTheme }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const { isAuthenticated, logout } = useAuth();
 
   const scrollTo = (href) => {
     setMobileOpen(false);
@@ -65,23 +69,45 @@ export default function Navbar({ theme, toggleTheme }) {
             <div className="flex items-center gap-3">
               <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
 
-              <Link
-                to="/login"
-                className="hidden sm:inline-flex px-4 py-2 text-sm font-medium text-text-secondary
-                         hover:text-text-primary transition-colors duration-200 rounded-lg
-                         hover:bg-surface-card/50"
-              >
-                Sign In
-              </Link>
-
-              <Link
-                to="/onboard"
-                className="hidden sm:inline-flex items-center px-4 py-2 text-sm font-semibold
-                         rounded-lg accent-gradient text-white accent-glow
-                         hover:opacity-90 transition-opacity duration-200"
-              >
-                Start Free
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <button
+                    onClick={() => logout()}
+                    className="hidden sm:inline-flex px-4 py-2 text-sm font-medium text-text-secondary
+                             hover:text-text-primary transition-colors duration-200 rounded-lg
+                             hover:bg-surface-card/50 cursor-pointer focus:outline-none"
+                  >
+                    Log Out
+                  </button>
+                  <Link
+                    to="/app/dashboard"
+                    className="hidden sm:inline-flex items-center px-4 py-2 text-sm font-semibold
+                             rounded-lg accent-gradient text-white accent-glow
+                             hover:opacity-90 transition-opacity duration-200"
+                  >
+                    Dashboard
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className="hidden sm:inline-flex px-4 py-2 text-sm font-medium text-text-secondary
+                             hover:text-text-primary transition-colors duration-200 rounded-lg
+                             hover:bg-surface-card/50"
+                  >
+                    Sign In
+                  </Link>
+                  <button
+                    onClick={() => setShowRequestModal(true)}
+                    className="hidden sm:inline-flex items-center px-4 py-2 text-sm font-semibold
+                             rounded-lg accent-gradient text-white accent-glow
+                             hover:opacity-90 transition-opacity duration-200 cursor-pointer"
+                  >
+                    Request Access
+                  </button>
+                </>
+              )}
 
               {/* Mobile Menu Button */}
               <button
@@ -122,27 +148,60 @@ export default function Navbar({ theme, toggleTheme }) {
                 </button>
               ))}
               <div className="section-divider my-2" />
-              <Link
-                to="/login"
-                onClick={() => setMobileOpen(false)}
-                className="px-4 py-3 text-sm font-medium text-text-secondary
-                         hover:text-text-primary hover:bg-surface-card/50
-                         rounded-lg transition-colors duration-200"
-              >
-                Sign In
-              </Link>
-              <Link
-                to="/onboard"
-                onClick={() => setMobileOpen(false)}
-                className="mt-1 px-4 py-3 text-sm font-semibold text-center
-                         rounded-lg accent-gradient text-white accent-glow"
-              >
-                Start Free
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setMobileOpen(false);
+                    }}
+                    className="px-4 py-3 text-sm font-medium text-text-secondary
+                             hover:text-text-primary hover:bg-surface-card/50
+                             rounded-lg transition-colors duration-200 text-left cursor-pointer focus:outline-none"
+                  >
+                    Log Out
+                  </button>
+                  <Link
+                    to="/app/dashboard"
+                    onClick={() => setMobileOpen(false)}
+                    className="mt-1 px-4 py-3 text-sm font-semibold text-center
+                             rounded-lg accent-gradient text-white accent-glow"
+                  >
+                    Dashboard
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    onClick={() => setMobileOpen(false)}
+                    className="px-4 py-3 text-sm font-medium text-text-secondary
+                             hover:text-text-primary hover:bg-surface-card/50
+                             rounded-lg transition-colors duration-200"
+                  >
+                    Sign In
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setShowRequestModal(true);
+                      setMobileOpen(false);
+                    }}
+                    className="mt-1 px-4 py-3 text-sm font-semibold text-center
+                             rounded-lg accent-gradient text-white accent-glow cursor-pointer focus:outline-none"
+                  >
+                    Request Access
+                  </button>
+                </>
+              )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <RequestAccessModal 
+        isOpen={showRequestModal} 
+        onClose={() => setShowRequestModal(false)} 
+      />
     </>
   );
 }

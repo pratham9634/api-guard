@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { AlertCircle, UserPlus } from 'lucide-react';
+import { AlertCircle, UserPlus, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import * as api from '../api/client';
 import DataTable from '../components/DataTable';
 import StatusBadge from '../components/StatusBadge';
+import ConfirmModal from '../components/ConfirmModal';
 import Modal from '../components/Modal';
+import AlertModal from '../components/AlertModal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { formatDate } from '../utils/formatters';
 import { ROLES, ROLE_LABELS } from '../utils/constants';
@@ -20,6 +22,10 @@ export default function Users() {
   const [form, setForm] = useState({ username: '', email: '', password: '', role: 'client_viewer' });
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState('');
+
+  // Global alert modal
+  const [alertError, setAlertError] = useState('');
+  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState(null);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -50,7 +56,7 @@ export default function Users() {
       await api.updateUserStatus(userId, !currentStatus);
       fetchUsers();
     } catch (err) {
-      alert(err.message);
+      setAlertError(err.message);
     }
   };
 
@@ -59,7 +65,7 @@ export default function Users() {
       await api.updateUserRole(userId, newRole);
       fetchUsers();
     } catch (err) {
-      alert(err.message);
+      setAlertError(err.message);
     }
   };
 
@@ -72,7 +78,11 @@ export default function Users() {
     setCreating(true);
     setCreateError('');
     try {
-      await api.registerUser(form);
+      if (isSuperAdmin) {
+        await api.registerUser(form);
+      } else {
+        await api.createClientUser(user.clientId, form);
+      }
       setShowCreate(false);
       setForm({ username: '', email: '', password: '', role: 'client_viewer' });
       fetchUsers();
@@ -81,6 +91,21 @@ export default function Users() {
     } finally {
       setCreating(false);
     }
+  };
+
+  const handleDeleteUser = (userToDelete) => {
+    setConfirmDeleteDialog({
+      title: 'Permanently Delete User',
+      message: `Are you sure you want to completely delete the user ${userToDelete.username} (${userToDelete.email})? This action cannot be undone.`,
+      onConfirm: async () => {
+        try {
+          await api.deleteUserCompletely(userToDelete._id);
+          fetchUsers();
+        } catch (err) {
+          setAlertError(err.message);
+        }
+      }
+    });
   };
 
   const columns = [
@@ -124,6 +149,19 @@ export default function Users() {
       ),
     },
     { key: 'createdAt', label: 'Created', render: (v) => formatDate(v) },
+    ...(isSuperAdmin ? [{
+      key: 'actions',
+      label: 'Actions',
+      render: (_, row) => (
+        <button
+          className="inline-flex items-center justify-center p-1.5 rounded-lg text-danger hover:bg-danger/10 transition-colors focus:outline-none cursor-pointer"
+          onClick={(e) => { e.stopPropagation(); handleDeleteUser(row); }}
+          title="Permanently Delete User"
+        >
+          <Trash2 size={16} />
+        </button>
+      )
+    }] : [])
   ];
 
   return (
@@ -135,7 +173,7 @@ export default function Users() {
             {isSuperAdmin ? 'Manage all users across clients' : 'View users in your organization'}
           </p>
         </div>
-        {isSuperAdmin && (
+        {(isSuperAdmin || user?.role === 'client_admin') && (
           <button
             className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 focus:outline-none disabled:opacity-50 disabled:pointer-events-none cursor-pointer select-none accent-gradient hover:accent-gradient-hover text-white accent-glow"
             onClick={() => setShowCreate(true)}
@@ -159,7 +197,7 @@ export default function Users() {
         emptyDescription={isSuperAdmin ? 'Create the first user to get started' : 'No users in your organization'}
       />
 
-      {/* Create User Modal (super_admin only) */}
+      {/* Create User Modal (super_admin and client_admin) */}
       <Modal
         isOpen={showCreate}
         onClose={() => { setShowCreate(false); setCreateError(''); }}
@@ -225,6 +263,22 @@ export default function Users() {
           </select>
         </div>
       </Modal>
+
+      <AlertModal
+        isOpen={!!alertError}
+        onClose={() => setAlertError('')}
+        message={alertError}
+      />
+
+      <ConfirmModal
+        isOpen={!!confirmDeleteDialog}
+        onClose={() => setConfirmDeleteDialog(null)}
+        title={confirmDeleteDialog?.title}
+        message={confirmDeleteDialog?.message}
+        onConfirm={confirmDeleteDialog?.onConfirm}
+        isDanger={true}
+        confirmText="Permanently Delete"
+      />
     </div>
   );
 }

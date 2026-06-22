@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Globe, Mail, Calendar, Plus, AlertCircle,
-  KeyRound, Users, RotateCw, Trash2, Ban
+  KeyRound, Users, RotateCw, Trash2, Ban, CheckCircle, Copy
 } from 'lucide-react';
 import * as api from '../api/client';
 import DataTable from '../components/DataTable';
 import StatusBadge from '../components/StatusBadge';
 import Modal from '../components/Modal';
+import ConfirmModal from '../components/ConfirmModal';
+import AlertModal from '../components/AlertModal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { formatDate, formatDateTime, maskApiKey } from '../utils/formatters';
 import { ENVIRONMENTS, ROLE_LABELS } from '../utils/constants';
@@ -38,6 +40,12 @@ export default function ClientDetail() {
   const [keyForm, setKeyForm] = useState({ name: '', description: '', environment: 'production' });
   const [creatingKey, setCreatingKey] = useState(false);
   const [keyError, setKeyError] = useState('');
+
+  // Modals state
+  const [alertError, setAlertError] = useState('');
+  const [confirmDialog, setConfirmDialog] = useState(null);
+  const [newlyCreatedKey, setNewlyCreatedKey] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   const fetchClient = useCallback(async () => {
     try {
@@ -96,10 +104,14 @@ export default function ClientDetail() {
     setCreatingKey(true);
     setKeyError('');
     try {
-      await api.createApiKey(id, keyForm);
+      const res = await api.createApiKey(id, keyForm);
       setShowCreateKey(false);
       setKeyForm({ name: '', description: '', environment: 'production' });
       fetchKeys();
+      if (res.data?.keyValue) {
+        setNewlyCreatedKey(res.data.keyValue);
+        setCopied(false);
+      }
     } catch (err) {
       setKeyError(err.message);
     } finally {
@@ -107,24 +119,53 @@ export default function ClientDetail() {
     }
   };
 
-  const handleRevokeKey = async (keyId) => {
-    if (!confirm('Revoke this API key?')) return;
-    try {
-      await api.revokeApiKey(id, keyId);
-      fetchKeys();
-    } catch (err) {
-      alert(err.message);
-    }
+  const handleRevokeKey = (keyId) => {
+    setConfirmDialog({
+      title: 'Revoke API Key',
+      message: 'Are you sure you want to revoke this API key? It will stop working immediately.',
+      onConfirm: async () => {
+        try {
+          await api.revokeApiKey(id, keyId);
+          fetchKeys();
+        } catch (err) {
+          setAlertError(err.message);
+        }
+      }
+    });
   };
 
-  const handleDeleteKey = async (keyId) => {
-    if (!confirm('Permanently delete this API key?')) return;
-    try {
-      await api.deleteApiKey(id, keyId);
-      fetchKeys();
-    } catch (err) {
-      alert(err.message);
-    }
+  const handleDeleteKey = (keyId) => {
+    setConfirmDialog({
+      title: 'Delete API Key',
+      message: 'Permanently delete this API key? This action cannot be undone.',
+      onConfirm: async () => {
+        try {
+          await api.deleteApiKey(id, keyId);
+          fetchKeys();
+        } catch (err) {
+          setAlertError(err.message);
+        }
+      }
+    });
+  };
+
+  const handleRotateKey = (keyId) => {
+    setConfirmDialog({
+      title: 'Rotate API Key',
+      message: 'Rotate this API key? The old key will stop working immediately and you will need to update your integrations.',
+      onConfirm: async () => {
+        try {
+          const res = await api.rotateApiKey(id, keyId);
+          fetchKeys();
+          if (res.data?.keyValue) {
+            setNewlyCreatedKey(res.data.keyValue);
+            setCopied(false);
+          }
+        } catch (err) {
+          setAlertError(err.message);
+        }
+      }
+    });
   };
 
   const userColumns = [
@@ -148,15 +189,22 @@ export default function ClientDetail() {
         <div className="flex gap-1">
           <button
             className="inline-flex items-center justify-center p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-elevated/50 transition-colors duration-200 cursor-pointer focus:outline-none"
+            title="Rotate"
+            onClick={(e) => { e.stopPropagation(); handleRotateKey(row.keyId); }}
+          >
+            <RotateCw size={15} />
+          </button>
+          <button
+            className="inline-flex items-center justify-center p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-elevated/50 transition-colors duration-200 cursor-pointer focus:outline-none"
             title="Revoke"
-            onClick={(e) => { e.stopPropagation(); handleRevokeKey(row._id); }}
+            onClick={(e) => { e.stopPropagation(); handleRevokeKey(row.keyId); }}
           >
             <Ban size={15} />
           </button>
           <button
             className="inline-flex items-center justify-center p-1.5 rounded-lg text-text-secondary hover:text-danger hover:bg-danger-bg transition-colors duration-200 cursor-pointer focus:outline-none"
             title="Delete"
-            onClick={(e) => { e.stopPropagation(); handleDeleteKey(row._id); }}
+            onClick={(e) => { e.stopPropagation(); handleDeleteKey(row.keyId); }}
           >
             <Trash2 size={15} />
           </button>
@@ -393,6 +441,63 @@ export default function ClientDetail() {
           >
             {ENVIRONMENTS.map(env => <option key={env} value={env}>{env}</option>)}
           </select>
+        </div>
+      </Modal>
+
+      <AlertModal
+        isOpen={!!alertError}
+        onClose={() => setAlertError('')}
+        message={alertError}
+      />
+
+      <ConfirmModal
+        isOpen={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        title={confirmDialog?.title}
+        message={confirmDialog?.message}
+        onConfirm={confirmDialog?.onConfirm}
+      />
+
+      {/* Show newly created API key */}
+      <Modal
+        isOpen={!!newlyCreatedKey}
+        onClose={() => setNewlyCreatedKey(null)}
+        title="API Key Created"
+        footer={
+          <button
+            className="px-4 py-2 text-sm font-semibold rounded-lg bg-surface-elevated hover:bg-surface-card-hover border border-border text-text-primary transition-colors focus:outline-none cursor-pointer"
+            onClick={() => setNewlyCreatedKey(null)}
+          >
+            Close
+          </button>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex gap-4 items-start">
+            <div className="p-2 rounded-full bg-success/10 text-success shrink-0">
+              <CheckCircle size={20} />
+            </div>
+            <div>
+              <p className="text-sm text-text-primary font-semibold">Please copy your API key now.</p>
+              <p className="text-sm text-text-secondary mt-1">For your security, it won't be shown again.</p>
+            </div>
+          </div>
+          <div className="relative mt-2">
+            <code className="block w-full p-4 bg-surface-input border border-border rounded-lg text-text-primary text-sm font-mono break-all pr-12">
+              {newlyCreatedKey}
+            </code>
+            <button
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-text-secondary hover:text-accent-primary transition-colors focus:outline-none bg-surface-input cursor-pointer"
+              onClick={() => {
+                navigator.clipboard.writeText(newlyCreatedKey);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }}
+              title="Copy to clipboard"
+            >
+              {copied ? <CheckCircle size={16} className="text-success" /> : <Copy size={16} />}
+            </button>
+          </div>
         </div>
       </Modal>
     </div>

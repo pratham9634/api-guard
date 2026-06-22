@@ -95,5 +95,16 @@ async delete(keyId) {
     }
 }
 
+async deleteByClientId(clientId) {
+    try {
+        const result = await this.model.deleteMany({ clientId });
+        logger.info(`API Keys deleted for client: ${clientId}`);
+        return result.deletedCount;
+    } catch (error) {
+        logger.error(`Error deleting API Keys for client: ${error.message}`);
+        throw error;
+    }
+}
+
 }
 export default new MongoApiKeyRepository();
