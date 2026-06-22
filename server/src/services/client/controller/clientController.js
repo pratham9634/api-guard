@@ -144,8 +144,39 @@ export class ClientController {
     async deactivateClient(req, res, next) {
         try {
             const { clientId } = req.params;
-            const deactivatedClient = await this.clientService.deactivateClient(clientId, req.user);
-            return res.status(200).json(ResponseFormatter.success(deactivatedClient, "Client deactivated successfully", 200));
+            const client = await this.clientService.deactivateClient(clientId, req.user);
+            return res.status(200).json(ResponseFormatter.success(client, "Client deactivated successfully", 200));
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    // --- Access Requests Admin Methods ---
+
+    async getAccessRequests(req, res, next) {
+        try {
+            const requests = await this.clientService.getAccessRequests(req.user);
+            return res.status(200).json(ResponseFormatter.success(requests, "Access requests fetched successfully"));
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async approveAccessRequest(req, res, next) {
+        try {
+            const { requestId } = req.params;
+            const result = await this.clientService.approveAccessRequest(requestId, req.user);
+            return res.status(200).json(ResponseFormatter.success(result, "Access request approved and client created"));
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async rejectAccessRequest(req, res, next) {
+        try {
+            const { requestId } = req.params;
+            const request = await this.clientService.rejectAccessRequest(requestId, req.user);
+            return res.status(200).json(ResponseFormatter.success(request, "Access request rejected"));
         } catch (error) {
             next(error);
         }
@@ -243,5 +274,42 @@ export class ClientController {
         }
     }
 
+    /**
+     * Delete user completely
+     */
+    async deleteUser(req, res, next) {
+        try {
+            const { userId } = req.params;
+            await this.clientService.deleteUserCompletely(userId, req.user);
+            return res.status(200).json(ResponseFormatter.success(null, "User permanently deleted", 200));
+        } catch (error) {
+            next(error);
+        }
+    }
 
+    /**
+     * Delete client completely
+     */
+    async deleteClientCompletely(req, res, next) {
+        try {
+            const { clientId } = req.params;
+            await this.clientService.deleteClientCompletely(clientId, req.user);
+            return res.status(200).json(ResponseFormatter.success(null, "Client permanently deleted", 200));
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * Delete access request completely
+     */
+    async deleteAccessRequest(req, res, next) {
+        try {
+            const { requestId } = req.params;
+            await this.clientService.deleteAccessRequest(requestId, req.user);
+            return res.status(200).json(ResponseFormatter.success(null, "Access request permanently deleted", 200));
+        } catch (error) {
+            next(error);
+        }
+    }
 }

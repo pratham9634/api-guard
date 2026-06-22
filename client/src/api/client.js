@@ -23,7 +23,9 @@ async function apiFetch(endpoint, options = {}) {
   const data = await res.json().catch(() => null);
 
   if (!res.ok) {
-    const error = new Error(data?.message || `Request failed (${res.status})`);
+    const errorDetails = data?.errors ? ` - ${data.errors.join(', ')}` : '';
+    const errorMessage = data?.message ? `${data.message}${errorDetails}` : `Request failed (${res.status})`;
+    const error = new Error(errorMessage);
     error.status = res.status;
     error.data = data;
     throw error;
@@ -67,6 +69,9 @@ export const updateClient = (clientId, data) =>
 export const deactivateClient = (clientId) =>
   apiFetch(`/api/admin/clients/${clientId}`, { method: 'DELETE' });
 
+export const deleteClientHard = (clientId) =>
+  apiFetch(`/api/admin/clients/${clientId}/hard`, { method: 'DELETE' });
+
 // ─── Client Users ───
 export const getClientUsers = (clientId) =>
   apiFetch(`/api/admin/clients/${clientId}/users`);
@@ -100,6 +105,9 @@ export const updateUserStatus = (userId, isActive) =>
 export const updateUserRole = (userId, role) =>
   apiFetch(`/api/admin/users/${userId}/role`, { method: 'PUT', body: { role } });
 
+export const deleteUserCompletely = (userId) =>
+  apiFetch(`/api/admin/users/${userId}`, { method: 'DELETE' });
+
 // ─── Analytics ───
 export const getDashboard = (params = {}) => {
   const query = new URLSearchParams();
@@ -118,3 +126,20 @@ export const getStats = (params = {}) => {
   const qs = query.toString();
   return apiFetch(`/api/analytics/stats${qs ? '?' + qs : ''}`);
 };
+
+// --- Public Endpoints ---
+export const requestAccess = (data) =>
+  apiFetch('/api/public/request-access', { method: 'POST', body: data });
+
+// --- Admin Endpoints ---
+export const getAccessRequests = () =>
+  apiFetch('/api/admin/requests');
+
+export const approveAccessRequest = (requestId) =>
+  apiFetch(`/api/admin/requests/${requestId}/approve`, { method: 'POST' });
+
+export const rejectAccessRequest = (requestId) =>
+  apiFetch(`/api/admin/requests/${requestId}/reject`, { method: 'POST' });
+
+export const deleteAccessRequest = (requestId) =>
+  apiFetch(`/api/admin/requests/${requestId}`, { method: 'DELETE' });

@@ -8,6 +8,7 @@ import {
   Users,
   UserCircle,
   Shield,
+  Inbox,
 } from 'lucide-react';
 import { ROLES } from '../../utils/constants';
 
@@ -20,6 +21,7 @@ export default function Sidebar({ isOpen, onClose }) {
     { to: '/app/analytics', label: 'Analytics', icon: BarChart3 },
     { label: 'Management', section: true, requireRole: ROLES.SUPER_ADMIN },
     { to: '/app/clients', label: 'Clients', icon: Building2, requireRole: ROLES.SUPER_ADMIN },
+    { to: '/app/requests', label: 'Requests', icon: Inbox, requireRole: ROLES.SUPER_ADMIN },
     { to: '/app/users', label: 'Users', icon: Users },
     { label: 'Security', section: true },
     { to: '/app/api-keys', label: 'API Keys', icon: KeyRound },

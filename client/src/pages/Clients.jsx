@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Building2, AlertCircle } from 'lucide-react';
+import { Plus, Building2, AlertCircle, Trash2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import * as api from '../api/client';
 import DataTable from '../components/DataTable';
 import StatusBadge from '../components/StatusBadge';
+import ConfirmModal from '../components/ConfirmModal';
 import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { formatDate } from '../utils/formatters';
@@ -16,7 +18,9 @@ export default function Clients() {
   const [showCreate, setShowCreate] = useState(false);
   const [createForm, setCreateForm] = useState({ name: '', email: '', description: '', website: '' });
   const [creating, setCreating] = useState(false);
+  const { isSuperAdmin } = useAuth();
   const [createError, setCreateError] = useState('');
+  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState(null);
 
   const fetchClients = useCallback(async () => {
     try {
@@ -56,6 +60,21 @@ export default function Clients() {
     }
   };
 
+  const handleDeleteClient = (clientToDelete) => {
+    setConfirmDeleteDialog({
+      title: 'Permanently Delete Client',
+      message: `Are you sure you want to completely delete ${clientToDelete.name} (${clientToDelete.email})? This will also permanently delete all associated Users and API Keys. This action cannot be undone.`,
+      onConfirm: async () => {
+        try {
+          await api.deleteClientHard(clientToDelete._id);
+          fetchClients();
+        } catch (err) {
+          setError(err.message);
+        }
+      }
+    });
+  };
+
   const columns = [
     { key: 'name', label: 'Name', render: (val) => <strong>{val}</strong> },
     { key: 'slug', label: 'Slug', render: (val) => <code className="text-text-secondary text-xs bg-surface-input px-1.5 py-0.5 rounded border border-border">{val}</code> },
@@ -70,6 +89,19 @@ export default function Clients() {
       label: 'Created',
       render: (val) => formatDate(val),
     },
+    ...(isSuperAdmin ? [{
+      key: 'actions',
+      label: 'Actions',
+      render: (_, row) => (
+        <button
+          className="inline-flex items-center justify-center p-1.5 rounded-lg text-danger hover:bg-danger/10 transition-colors focus:outline-none cursor-pointer"
+          onClick={(e) => { e.stopPropagation(); handleDeleteClient(row); }}
+          title="Permanently Delete Client"
+        >
+          <Trash2 size={16} />
+        </button>
+      )
+    }] : [])
   ];
 
   return (
@@ -177,6 +209,16 @@ export default function Clients() {
           />
         </div>
       </Modal>
+
+      <ConfirmModal
+        isOpen={!!confirmDeleteDialog}
+        onClose={() => setConfirmDeleteDialog(null)}
+        title={confirmDeleteDialog?.title}
+        message={confirmDeleteDialog?.message}
+        onConfirm={confirmDeleteDialog?.onConfirm}
+        isDanger={true}
+        confirmText="Permanently Delete"
+      />
     </div>
   );
 }

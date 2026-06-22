@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, Play } from 'lucide-react';
+import { useState } from 'react';
+import RequestAccessModal from './RequestAccessModal';
 
 /* ── Fake live dashboard data for the hero visual ── */
 const FAKE_METRICS = [
@@ -23,8 +25,11 @@ const fadeUp = {
 };
 
 export default function HeroSection() {
+  const [showRequestModal, setShowRequestModal] = useState(false);
+
   return (
-    <section className="relative min-h-screen flex items-center pt-28 pb-20 overflow-hidden">
+    <>
+      <section className="relative min-h-screen flex items-center pt-28 pb-20 overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0 landing-grid-bg" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px]
@@ -74,16 +79,16 @@ export default function HeroSection() {
             {/* CTAs */}
             <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4
                           justify-center lg:justify-start">
-              <Link
-                to="/onboard"
+              <button
+                onClick={() => setShowRequestModal(true)}
                 className="group inline-flex items-center justify-center gap-2.5 px-7 py-3.5
                          text-base font-semibold rounded-xl accent-gradient text-white
                          shadow-lg shadow-accent-primary/25 hover:shadow-xl
-                         hover:shadow-accent-primary/30 transition-all duration-300"
+                         hover:shadow-accent-primary/30 transition-all duration-300 cursor-pointer"
               >
-                Start Monitoring Free
+                Request Access
                 <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
-              </Link>
+              </button>
               <Link
                 to="/login"
                 className="group inline-flex items-center justify-center gap-2.5 px-7 py-3.5
@@ -192,6 +197,12 @@ export default function HeroSection() {
           </motion.div>
         </div>
       </div>
-    </section>
+      </section>
+
+      <RequestAccessModal 
+        isOpen={showRequestModal} 
+        onClose={() => setShowRequestModal(false)} 
+      />
+    </>
   );
 }

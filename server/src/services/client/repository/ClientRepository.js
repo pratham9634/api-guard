@@ -99,6 +99,16 @@ class MongoClientRepository extends BaseClientRepository {
             throw error;
         }
     }
+
+    async deleteById(clientId) {
+        try {
+            await this.model.findByIdAndDelete(clientId);
+            logger.info('Client permanently deleted from MongoDB', { clientId });
+        } catch (error) {
+            logger.error('Error deleting client from MongoDB', error);
+            throw error;
+        }
+    }
 }
 
 

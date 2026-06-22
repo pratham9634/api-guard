@@ -15,6 +15,7 @@ import authRouter from "./services/auth/routes/authRouter.js"
 import clientRouter from './services/client/routes/clientRoutes.js';
 import ingestRouter from './services/ingest/routes/ingestRoutes.js';
 import analyticsRouter from "./services/analytics/routes/analyticsRoutes.js"
+import publicRouter from './services/public/routes/publicRoutes.js';
 /**
  * Initialize Express app
  */
@@ -87,8 +88,9 @@ app.get("/", (req, res) => {
  */
 app.use("/api/auth", authRouter)
 app.use("/api/hit", ingestRouter)
-app.use("/api", clientRouter)
+app.use("/api/public", publicRouter)
 app.use("/api/analytics", analyticsRouter)
+app.use("/api", clientRouter)
 
 /**
  * 404 Handler

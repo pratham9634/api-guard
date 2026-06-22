@@ -92,8 +92,25 @@ class MongoUserRepository extends BaseRepository {
         logger.error("Error finding all users including inactive", error);
         throw error;
     }
-}
+    }
 
+    async deleteById(userId) {
+        try {
+            await this.model.findByIdAndDelete(userId);
+        } catch (error) {
+            logger.error("Error deleting user by id", error);
+            throw error;
+        }
+    }
+
+    async deleteByClientId(clientId) {
+        try {
+            await this.model.deleteMany({ clientId: clientId });
+        } catch (error) {
+            logger.error("Error deleting users by client id", error);
+            throw error;
+        }
+    }
 }
 
 export default new MongoUserRepository()

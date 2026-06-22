@@ -4,6 +4,8 @@ import { APPLICATION_ROLES, isValidClientRole } from "../../../shared/constants/
 import AppError from "../../../shared/utils/AppError.js";
 import { v4 as uudiv4 } from "uuid";
 import crypto from 'crypto';
+import AccessRequest from "../../../shared/models/AccessRequest.js";
+import emailService from "../../../shared/services/emailService.js";
 
 /**
  * ClientService class to handle business logic related to clients
@@ -123,6 +125,10 @@ export class ClientService {
         try {
             if (!this.canUserAccessClient(adminUser, clientId)) {
                 throw new AppError("Access denied", 403)
+            };
+
+            if (!(adminUser.role === APPLICATION_ROLES.SUPER_ADMIN || adminUser.role === APPLICATION_ROLES.CLIENT_ADMIN)) {
+                throw new AppError("Access denied - Only Super Admin and Client Admin can manage users", 403)
             };
 
             const { username, email, password, role = APPLICATION_ROLES.CLIENT_VIEWER } = userData;
@@ -539,5 +545,155 @@ export class ClientService {
         }
     }
 
+    // --- Access Requests Admin Methods ---
 
+    async getAccessRequests(adminUser) {
+        if (adminUser.role !== APPLICATION_ROLES.SUPER_ADMIN) {
+            throw new AppError("Access denied - Super Admin only", 403);
+        }
+        return await AccessRequest.find().sort({ createdAt: -1 });
+    }
+
+    async approveAccessRequest(requestId, adminUser) {
+        try {
+            if (adminUser.role !== APPLICATION_ROLES.SUPER_ADMIN) {
+                throw new AppError("Access denied - Super Admin only", 403);
+            }
+
+            const request = await AccessRequest.findById(requestId);
+            if (!request) {
+                throw new AppError("Access request not found", 404);
+            }
+
+            if (request.status !== "pending") {
+                throw new AppError(`Access request is already ${request.status}`, 400);
+            }
+
+            // Pre-validation: Check if User already exists
+            const existingUser = await this.userRepository.findByEmail(request.email);
+            if (existingUser) {
+                throw new AppError(`A user with the email ${request.email} already exists in the system.`, 409);
+            }
+
+            // Pre-validation: Check if Client already exists
+            const slug = this.generateSlug(request.companyName);
+            const exisitingClient = await this.clientRepository.findBySlug(slug);
+            if (exisitingClient) {
+                throw new AppError(`A client organization similar to '${request.companyName}' already exists.`, 409);
+            }
+
+            // 1. Create the Client
+            const client = await this.createClient({
+                name: request.companyName,
+                email: request.email,
+                description: request.useCase,
+            }, adminUser);
+
+            // 2. Generate random password
+            const rawPassword = crypto.randomBytes(8).toString('hex');
+            let username = request.email.split('@')[0] + Math.floor(Math.random() * 1000);
+            
+            // Ensure username uniqueness
+            while (await this.userRepository.findByUsername(username)) {
+                username = request.email.split('@')[0] + Math.floor(Math.random() * 1000);
+            }
+
+            // 3. Create the Client Admin user
+            const user = await this.createClientUser(client._id, {
+                username,
+                email: request.email,
+                password: rawPassword,
+                role: APPLICATION_ROLES.CLIENT_ADMIN
+            }, adminUser);
+
+            // 4. Update request status
+            request.status = "approved";
+            await request.save();
+
+            // 5. Send Email
+            const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+            await emailService.sendWelcomeCredentials(request.email, username, rawPassword, `${frontendUrl}/login`);
+
+            logger.info(`Access request approved for ${request.email}. Client and admin user created.`);
+            
+            return { client, user: this.formatClientForResponse(user) };
+        } catch (error) {
+            logger.error("Error approving access request:", error);
+            throw error;
+        }
+    }
+
+    async rejectAccessRequest(requestId, adminUser) {
+        if (adminUser.role !== APPLICATION_ROLES.SUPER_ADMIN) {
+            throw new AppError("Access denied - Super Admin only", 403);
+        }
+
+        const request = await AccessRequest.findById(requestId);
+        if (!request) {
+            throw new AppError("Access request not found", 404);
+        }
+
+        request.status = "rejected";
+        await request.save();
+        
+        logger.info(`Access request rejected for ${request.email}`);
+        return request;
+    }
+
+    async deleteUserCompletely(userId, adminUser) {
+        if (adminUser.role !== APPLICATION_ROLES.SUPER_ADMIN) {
+            throw new AppError("Access denied - Super Admin only", 403);
+        }
+
+        const user = await this.userRepository.findById(userId);
+        if (!user) {
+            throw new AppError("User not found", 404);
+        }
+
+        await this.userRepository.deleteById(userId);
+        await AccessRequest.deleteMany({ email: user.email });
+
+        logger.info(`User ${user.username} permanently deleted by ${adminUser.userId}`);
+        return { success: true };
+    }
+
+    async deleteClientCompletely(clientId, adminUser) {
+        if (adminUser.role !== APPLICATION_ROLES.SUPER_ADMIN) {
+            throw new AppError("Access denied - Super Admin only", 403);
+        }
+
+        const client = await this.clientRepository.findById(clientId);
+        if (!client) {
+            throw new AppError("Client not found", 404);
+        }
+
+        // Cascade delete API keys
+        await this.apiKeyRepository.deleteByClientId(clientId);
+        
+        // Cascade delete Users
+        await this.userRepository.deleteByClientId(clientId);
+
+        // Delete the Client
+        await this.clientRepository.deleteById(clientId);
+
+        // Delete any pending/approved AccessRequests associated with this client
+        await AccessRequest.deleteMany({ email: client.email });
+
+        logger.info(`Client ${client.name} and all associated data permanently deleted by ${adminUser.userId}`);
+        return { success: true };
+    }
+
+    async deleteAccessRequest(requestId, adminUser) {
+        if (adminUser.role !== APPLICATION_ROLES.SUPER_ADMIN) {
+            throw new AppError("Access denied - Super Admin only", 403);
+        }
+
+        const request = await AccessRequest.findByIdAndDelete(requestId);
+        if (!request) {
+            throw new AppError("Access request not found", 404);
+        }
+
+        logger.info(`Access request permanently deleted for ${request.email}`);
+        return { success: true };
+    }
 }

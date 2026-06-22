@@ -12,6 +12,7 @@ import ClientDetail from './pages/ClientDetail';
 import ApiKeys from './pages/ApiKeys';
 import Users from './pages/Users';
 import Profile from './pages/Profile';
+import AccessRequests from './pages/AccessRequests';
 import { ROLES } from './utils/constants';
 
 export default function App() {
@@ -48,6 +49,14 @@ export default function App() {
             element={
               <RoleGuard allowedRoles={[ROLES.SUPER_ADMIN]}>
                 <ClientDetail />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="requests"
+            element={
+              <RoleGuard allowedRoles={[ROLES.SUPER_ADMIN]}>
+                <AccessRequests />
               </RoleGuard>
             }
           />
