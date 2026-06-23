@@ -127,6 +127,15 @@ export const getStats = (params = {}) => {
   return apiFetch(`/api/analytics/stats${qs ? '?' + qs : ''}`);
 };
 
+export const getReports = (params = {}) => {
+  const query = new URLSearchParams();
+  if (params.startTime) query.set('startTime', params.startTime);
+  if (params.endTime) query.set('endTime', params.endTime);
+  if (params.clientId) query.set('clientId', params.clientId);
+  const qs = query.toString();
+  return apiFetch(`/api/analytics/reports${qs ? '?' + qs : ''}`);
+};
+
 // --- Public Endpoints ---
 export const requestAccess = (data) =>
   apiFetch('/api/public/request-access', { method: 'POST', body: data });

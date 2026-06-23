@@ -143,4 +143,22 @@ export class AnalyticsController {
             next(error)
         }
     }
+
+    async getReports(req, res, next) {
+        try {
+            const { startTime, endTime } = req.query;
+
+            const isSuperAdmin = await this.ensureCanViewAnalytics(req);
+            const finalClientId = await this.resolveFinalClientId(req, isSuperAdmin);
+            const timeRange = this.validateTimeRange(startTime, endTime);
+
+            const reports = await this.analyticsService.getAdvancedReports(finalClientId, timeRange);
+
+            res.status(200).json(
+                ResponseFormatter.success(reports, "Advanced report data retrieved successfully", 200)
+            );
+        } catch (error) {
+            next(error);
+        }
+    }
 }
