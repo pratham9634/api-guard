@@ -13,6 +13,7 @@ import ApiKeys from './pages/ApiKeys';
 import Users from './pages/Users';
 import Profile from './pages/Profile';
 import AccessRequests from './pages/AccessRequests';
+import Playground from './pages/Playground';
 import { ROLES } from './utils/constants';
 
 export default function App() {
@@ -61,6 +62,7 @@ export default function App() {
             }
           />
           <Route path="api-keys" element={<ApiKeys />} />
+          <Route path="playground" element={<Playground />} />
           <Route path="users" element={<Users />} />
           <Route path="profile" element={<Profile />} />
         </Route>

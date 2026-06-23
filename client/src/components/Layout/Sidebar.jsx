@@ -9,6 +9,7 @@ import {
   UserCircle,
   Shield,
   Inbox,
+  Terminal,
 } from 'lucide-react';
 import { ROLES } from '../../utils/constants';
 
@@ -25,6 +26,7 @@ export default function Sidebar({ isOpen, onClose }) {
     { to: '/app/users', label: 'Users', icon: Users },
     { label: 'Security', section: true },
     { to: '/app/api-keys', label: 'API Keys', icon: KeyRound },
+    { to: '/app/playground', label: 'Playground', icon: Terminal },
     { label: 'Account', section: true },
     { to: '/app/profile', label: 'Profile', icon: UserCircle },
   ];
