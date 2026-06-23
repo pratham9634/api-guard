@@ -1,301 +1,314 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useInView } from '../hooks/useInView';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { LayoutDashboard, BarChart3, Building2, KeyRound } from 'lucide-react';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const TABS = [
   {
     id: 'dashboard',
-    label: 'Dashboard',
+    label: 'Overview Console',
     icon: LayoutDashboard,
     content: {
-      title: 'Real-Time Overview',
-      description: 'See your API performance at a glance with live stat cards, top endpoints, and activity charts.',
+      title: 'Global Performance Dashboard',
+      description: 'See your complete system telemetry in a unified timeline. Instantly analyze total hits, error ratios, latency indices, and unique endpoints.',
       stats: [
-        { label: 'Total Hits', value: '1,247,839', color: '#4f46e5' },
-        { label: 'Error Rate', value: '0.12%', color: '#ef4444' },
-        { label: 'Avg Latency', value: '38ms', color: '#06b6d4' },
-        { label: 'Endpoints', value: '64', color: '#8b5cf6' },
+        { label: 'Ingestion Hits', value: '4.8M', trend: '+14%', color: '#6366f1' },
+        { label: 'Worker Latency', value: '28ms', trend: '-2ms', color: '#06b6d4' },
+        { label: 'Incident Errors', value: '0.01%', trend: '-0.02%', color: '#10b981' },
       ],
       chart: 'bar',
     },
   },
   {
     id: 'analytics',
-    label: 'Analytics',
+    label: 'Deep Analytics',
     icon: BarChart3,
     content: {
-      title: 'Deep Dive Analytics',
-      description: 'Hits, errors, and latency over time with configurable time ranges from 1 hour to 30 days.',
+      title: 'Time-Series Analytical Visuals',
+      description: 'Analyze telemetry distributions across custom ranges. Query database indexes, latency benchmarks, and endpoint response statuses.',
       stats: [
-        { label: 'Peak Hits/min', value: '4,218', color: '#4f46e5' },
-        { label: 'P95 Latency', value: '124ms', color: '#f59e0b' },
-        { label: 'Success Rate', value: '99.88%', color: '#10b981' },
-        { label: 'Services', value: '12', color: '#8b5cf6' },
+        { label: 'Peak QPS', value: '2,840', trend: 'Active', color: '#6366f1' },
+        { label: 'P99 Latency', value: '112ms', trend: 'Stable', color: '#f59e0b' },
+        { label: 'Active Services', value: '8 Nodes', trend: 'Healthy', color: '#ec4899' },
       ],
       chart: 'line',
     },
   },
   {
     id: 'clients',
-    label: 'Clients',
+    label: 'Client Manager',
     icon: Building2,
     content: {
-      title: 'Multi-Tenant Management',
-      description: 'Onboard client organizations, manage their users, and view per-client analytics.',
+      title: 'Multi-Tenant Workspace Management',
+      description: 'Onboard nested client groups, define custom schemas, review user accounts, and oversee client telemetry isolated streams.',
       table: [
-        { name: 'Acme Corp', slug: 'acme-corp', status: 'Active', users: 8 },
-        { name: 'Globex Inc', slug: 'globex-inc', status: 'Active', users: 5 },
-        { name: 'Initech', slug: 'initech', status: 'Active', users: 12 },
+        { name: 'Tesla Inc', slug: 'tesla-inc', status: 'Active', members: 14 },
+        { name: 'SpaceX Org', slug: 'spacex-org', status: 'Active', members: 8 },
+        { name: 'Apple Retail', slug: 'apple-retail', status: 'Active', members: 24 },
       ],
     },
   },
   {
     id: 'keys',
-    label: 'API Keys',
+    label: 'API Key Vault',
     icon: KeyRound,
     content: {
-      title: 'Key Lifecycle Management',
-      description: 'Create, rotate, revoke, and delete API keys across production, staging, and dev environments.',
+      title: 'Decoupled Environment Keys',
+      description: 'Generate, restrict, rotate, or revoke scoped API credentials. Sandbox routing and live logs take effect automatically.',
       keys: [
-        { name: 'Production Key', env: 'production', status: 'Active', id: 'ak_prod_x8f2...' },
-        { name: 'Staging Key', env: 'staging', status: 'Active', id: 'ak_stg_m3k9...' },
-        { name: 'Dev Key', env: 'development', status: 'Revoked', id: 'ak_dev_p7n1...' },
+        { name: 'Stripe Webhook Key', env: 'production', status: 'Active', key: 'ak_prod_x78...' },
+        { name: 'Github Action Key', env: 'staging', status: 'Active', key: 'ak_stag_m89...' },
+        { name: 'Local Sandbox Key', env: 'development', status: 'Revoked', key: 'ak_dev_t12...' },
       ],
     },
   },
 ];
 
-/* ── Fake chart SVGs ── */
-function BarChartMock() {
-  const bars = [65, 82, 45, 90, 73, 95, 68, 88, 78, 92];
-  return (
-    <div className="flex items-end gap-2 h-32 px-4 pt-4">
-      {bars.map((val, i) => (
-        <motion.div
-          key={i}
-          initial={{ height: 0 }}
-          animate={{ height: `${val}%` }}
-          transition={{ delay: i * 0.05, duration: 0.4 }}
-          className="flex-1 rounded-t-md bg-gradient-to-t from-indigo-600/40 to-indigo-500/80"
-        />
-      ))}
-    </div>
-  );
-}
-
-function LineChartMock() {
-  const points = '20,80 60,60 100,70 140,30 180,45 220,25 260,40 300,20 340,35 380,15';
-  return (
-    <svg viewBox="0 0 400 100" className="w-full h-32" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="rgba(79,70,229,0.3)" />
-          <stop offset="100%" stopColor="rgba(79,70,229,0)" />
-        </linearGradient>
-      </defs>
-      <motion.polygon
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-        points={`0,100 ${points} 400,100`}
-        fill="url(#lineGrad)"
-      />
-      <motion.polyline
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ delay: 0.2, duration: 1, ease: 'easeOut' }}
-        points={points}
-        fill="none"
-        stroke="#4f46e5"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function TableMock({ rows, columns }) {
-  return (
-    <div className="overflow-hidden rounded-lg border border-border/50">
-      <div className="grid gap-px bg-border/30">
-        <div className="grid bg-surface-secondary/50 px-4 py-2.5"
-             style={{ gridTemplateColumns: `repeat(${columns.length}, 1fr)` }}>
-          {columns.map(col => (
-            <div key={col} className="text-xs font-semibold text-text-tertiary uppercase tracking-wider">
-              {col}
-            </div>
-          ))}
-        </div>
-        {rows.map((row, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 + i * 0.1 }}
-            className="grid bg-surface-card/30 px-4 py-3"
-            style={{ gridTemplateColumns: `repeat(${columns.length}, 1fr)` }}
-          >
-            {Object.values(row).map((val, j) => (
-              <div key={j} className="text-sm text-text-secondary">
-                {val === 'Active' ? (
-                  <span className="inline-flex items-center gap-1.5 text-emerald-400 text-xs font-medium">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    {val}
-                  </span>
-                ) : val === 'Revoked' ? (
-                  <span className="inline-flex items-center gap-1.5 text-amber-400 text-xs font-medium">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                    {val}
-                  </span>
-                ) : (
-                  val
-                )}
-              </div>
-            ))}
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export default function ProductDemo() {
+  const containerRef = useRef(null);
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [ref, isInView] = useInView({ threshold: 0.15 });
   const tab = TABS.find(t => t.id === activeTab);
 
+  const steps = ['dashboard', 'analytics', 'clients', 'keys'];
+  const totalScrollDistance = 2000;
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Pin the product demo container and smoothly step through the mockups
+    const scrollTriggerInstance = ScrollTrigger.create({
+      trigger: container,
+      start: 'top top',
+      end: `+=${totalScrollDistance}`, // Pin scroll length
+      pin: true,
+      scrub: true,
+      onUpdate: (self) => {
+        const progress = self.progress;
+        const totalSteps = steps.length;
+        const index = Math.min(totalSteps - 1, Math.floor(progress * totalSteps));
+        setActiveTab(steps[index]);
+      }
+    });
+
+    return () => {
+      scrollTriggerInstance.kill();
+    };
+  }, []);
+
+  // Smooth scroll window to the corresponding step position when clicked
+  const handleTabClick = (id) => {
+    const idx = steps.indexOf(id);
+    if (idx === -1 || !containerRef.current) return;
+
+    const scrollTriggerInstance = ScrollTrigger.getById('demo-pin');
+    // Calculate scroll coordinates relative to current scroll triggers
+    const startScroll = ScrollTrigger.create({
+      trigger: containerRef.current,
+      start: 'top top',
+    }).start;
+
+    // Map index ratio to absolute window scroll position
+    const targetScroll = startScroll + (idx / steps.length) * totalScrollDistance + 50;
+
+    window.scrollTo({
+      top: targetScroll,
+      behavior: 'smooth'
+    });
+  };
+
   return (
-    <section ref={ref} className="py-24 relative">
-      <div className="landing-container">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-12"
-        >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full
-                        border border-accent-primary/30 bg-accent-primary/5
-                        text-accent-primary text-sm font-medium mb-6">
-            Product Preview
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-text-primary tracking-tight mb-4">
-            See It in Action
-          </h2>
-          <p className="text-lg text-text-secondary max-w-2xl mx-auto">
-            A dashboard that's powerful enough for DevOps teams, simple enough for everyone.
-          </p>
-        </motion.div>
+    <section 
+      ref={containerRef} 
+      className="min-h-screen flex items-center justify-center bg-surface-primary relative overflow-hidden py-16"
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--color-accent-secondary-rgb,rgba(0,212,182,0.015)),transparent_60%)]" />
 
-        {/* Dashboard Mockup */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="glass-landing rounded-2xl overflow-hidden shadow-2xl max-w-5xl mx-auto"
-        >
-          {/* Browser Chrome */}
-          <div className="flex items-center gap-2 px-5 py-3 border-b border-border/30">
-            <div className="flex gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-red-500/70" />
-              <div className="w-3 h-3 rounded-full bg-yellow-500/70" />
-              <div className="w-3 h-3 rounded-full bg-green-500/70" />
+      <div className="landing-container w-full relative z-10">
+        <div className="grid lg:grid-cols-12 gap-12 items-center">
+          
+          {/* Left side: Interactive content cards (5 columns) */}
+          <div className="lg:col-span-5 flex flex-col justify-center">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full
+                          border border-accent-secondary/20 bg-accent-secondary/5
+                          text-accent-secondary text-xs font-semibold mb-6 self-start">
+              Product Tour
             </div>
-            <div className="flex-1 flex justify-center">
-              <div className="px-4 py-1 rounded-md bg-surface-secondary/50 text-xs text-text-tertiary
-                            font-mono border border-border/30">
-                api-guard.io/dashboard
-              </div>
+            <h2 className="text-3xl sm:text-5xl font-extrabold text-text-primary tracking-tight mb-5">
+              Take a Closer <span className="gradient-text">Look Inside</span>
+            </h2>
+            
+            {/* Feature text descriptions */}
+            <div className="flex flex-col gap-3.5">
+              {TABS.map((t) => {
+                const isActive = activeTab === t.id;
+                const Icon = t.icon;
+                return (
+                  <div 
+                    key={t.id}
+                    onClick={() => handleTabClick(t.id)}
+                    className={`p-4 rounded-xl border transition-all duration-300 cursor-pointer text-left
+                      ${isActive 
+                        ? 'bg-surface-card border-accent-primary/30 shadow-lg shadow-accent-primary/5' 
+                        : 'bg-transparent border-transparent opacity-50 hover:opacity-85 hover:border-border/10'
+                      }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon size={18} className={isActive ? 'text-accent-primary' : 'text-text-secondary'} />
+                      <h4 className="text-sm font-bold text-text-primary">{t.label}</h4>
+                    </div>
+                    {isActive && (
+                      <p className="text-xs text-text-secondary leading-relaxed mt-2 pl-7">
+                        {t.content.description}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* Tab Bar */}
-          <div className="flex border-b border-border/30 px-5 relative">
-            {TABS.map(t => (
-              <button
-                key={t.id}
-                onClick={() => setActiveTab(t.id)}
-                className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium
-                         transition-colors duration-200 relative cursor-pointer focus:outline-none
-                         ${activeTab === t.id
-                           ? 'text-accent-primary'
-                           : 'text-text-tertiary hover:text-text-secondary'}`}
-              >
-                <t.icon size={16} />
-                {t.label}
-                {activeTab === t.id && (
-                  <motion.div
-                    layoutId="demo-tab-indicator"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent-primary rounded-full"
-                  />
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* Tab Content */}
-          <div className="p-6 min-h-[360px]">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.25 }}
-              >
-                <div className="mb-4">
-                  <h3 className="text-lg font-bold text-text-primary mb-1">{tab.content.title}</h3>
-                  <p className="text-sm text-text-secondary">{tab.content.description}</p>
+          {/* Right side: Mock dashboard viewport (7 columns) */}
+          <div className="lg:col-span-7 flex justify-center items-center">
+            <div className="w-full bg-surface-card border border-border/20 rounded-2xl shadow-2xl overflow-hidden relative">
+              
+              {/* Browser bar */}
+              <div className="flex items-center gap-2 px-5 py-3 border-b border-border/15 bg-surface-secondary/70">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-danger/70" />
+                  <div className="w-3 h-3 rounded-full bg-warning/70" />
+                  <div className="w-3 h-3 rounded-full bg-success/70" />
                 </div>
+                <div className="flex-1 flex justify-center">
+                  <div className="px-5 py-0.5 rounded-md bg-surface-secondary/50 text-[10px] text-text-tertiary font-mono border border-border/10">
+                    console.api-guard.io/{activeTab}
+                  </div>
+                </div>
+              </div>
 
-                {tab.content.stats && (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-                    {tab.content.stats.map(s => (
-                      <div key={s.label}
-                           className="bg-surface-secondary/50 rounded-xl p-4 border border-border/30">
-                        <div className="text-xs text-text-tertiary mb-1">{s.label}</div>
-                        <div className="text-2xl font-bold text-text-primary">{s.value}</div>
+              {/* Main panel display */}
+              <div className="p-6 min-h-[340px]">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTab}
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.98 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    <div className="mb-4">
+                      <h3 className="text-base font-bold text-text-primary mb-1">{tab.content.title}</h3>
+                      <p className="text-xs text-text-secondary">{tab.content.description}</p>
+                    </div>
+
+                    {/* Render Stats */}
+                    {tab.content.stats && (
+                      <div className="grid grid-cols-3 gap-3 mb-5">
+                        {tab.content.stats.map(s => (
+                          <div key={s.label} className="bg-surface-secondary/50 rounded-xl p-3 border border-border/10">
+                            <div className="text-[9px] text-text-tertiary mb-0.5">{s.label}</div>
+                            <div className="text-lg font-bold text-text-primary font-mono">{s.value}</div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                )}
+                    )}
 
-                {tab.content.chart === 'bar' && (
-                  <div className="bg-surface-secondary/30 rounded-xl border border-border/30 overflow-hidden">
-                    <div className="px-4 pt-4 text-xs text-text-tertiary font-medium">
-                      Top Endpoints — Hits Distribution
-                    </div>
-                    <BarChartMock />
-                  </div>
-                )}
+                    {/* Render Charts */}
+                    {tab.content.chart === 'bar' && (
+                      <div className="bg-surface-secondary/30 rounded-xl border border-border/15 p-4">
+                        <div className="h-28 flex items-end gap-2 pt-2">
+                          {[65, 82, 45, 90, 73, 95, 68, 88].map((val, i) => (
+                            <div 
+                              key={i} 
+                              className="flex-1 rounded-t bg-gradient-to-t from-accent-primary/20 to-accent-primary" 
+                              style={{ height: `${val}%` }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-                {tab.content.chart === 'line' && (
-                  <div className="bg-surface-secondary/30 rounded-xl border border-border/30 overflow-hidden">
-                    <div className="px-4 pt-4 text-xs text-text-tertiary font-medium">
-                      Hits Over Time — Last 24h
-                    </div>
-                    <LineChartMock />
-                  </div>
-                )}
+                    {tab.content.chart === 'line' && (
+                      <div className="bg-surface-secondary/30 rounded-xl border border-border/15 p-4">
+                        <svg viewBox="0 0 400 100" className="w-full h-24 overflow-visible" preserveAspectRatio="none">
+                           <polyline
+                            fill="none"
+                            stroke="var(--color-accent-secondary)"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            points="20,80 60,60 100,70 140,30 180,45 220,25 260,40 300,20 340,35 380,15"
+                          />
+                        </svg>
+                      </div>
+                    )}
 
-                {tab.content.table && (
-                  <TableMock
-                    rows={tab.content.table}
-                    columns={['Name', 'Slug', 'Status', 'Users']}
-                  />
-                )}
+                    {/* Render Tables */}
+                    {tab.content.table && (
+                      <div className="overflow-hidden rounded-xl border border-border/20">
+                        <table className="w-full text-left font-mono text-[11px]">
+                          <thead>
+                            <tr className="bg-surface-secondary/60 text-text-secondary border-b border-border/10">
+                              <th className="p-3">Org Name</th>
+                              <th className="p-3">Slug</th>
+                              <th className="p-3">Members</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {tab.content.table.map((row, i) => (
+                              <tr key={i} className="border-b border-border/5 bg-surface-card/10">
+                                <td className="p-3 text-text-primary font-bold">{row.name}</td>
+                                <td className="p-3 text-text-secondary">{row.slug}</td>
+                                <td className="p-3 text-accent-secondary font-semibold">{row.members}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+ 
+                    {/* Render Keys */}
+                    {tab.content.keys && (
+                      <div className="overflow-hidden rounded-xl border border-border/20">
+                        <table className="w-full text-left font-mono text-[11px]">
+                          <thead>
+                            <tr className="bg-surface-secondary/60 text-text-secondary border-b border-border/10">
+                              <th className="p-3">Key Name</th>
+                              <th className="p-3">Env</th>
+                              <th className="p-3">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {tab.content.keys.map((row, i) => (
+                              <tr key={i} className="border-b border-border/5 bg-surface-card/10">
+                                <td className="p-3 text-text-primary font-bold">{row.name}</td>
+                                <td className="p-3">
+                                  <span className="bg-warning-bg text-warning px-2 py-0.5 rounded text-[9px] uppercase border border-warning/20 font-bold">
+                                    {row.env}
+                                  </span>
+                                </td>
+                                <td className="p-3">
+                                  <span className={row.status === 'Active' ? 'text-success font-semibold' : 'text-danger'}>
+                                    {row.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
 
-                {tab.content.keys && (
-                  <TableMock
-                    rows={tab.content.keys}
-                    columns={['Name', 'Environment', 'Status', 'Key ID']}
-                  />
-                )}
-              </motion.div>
-            </AnimatePresence>
+            </div>
           </div>
-        </motion.div>
+
+        </div>
       </div>
     </section>
   );

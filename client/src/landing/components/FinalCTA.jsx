@@ -13,7 +13,7 @@ export default function FinalCTA() {
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="relative overflow-hidden rounded-3xl gradient-mesh"
+          className="relative overflow-hidden rounded-3xl gradient-mesh border border-border/40 bg-surface-secondary/30 shadow-xl"
         >
           {/* Inner padding */}
           <div className="relative z-10 px-8 py-20 sm:px-16 sm:py-24 text-center">
