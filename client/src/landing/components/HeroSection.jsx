@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Play, Terminal, Database, Cpu, Activity, RefreshCw } from 'lucide-react';
+import { ArrowRight, Play, Terminal, Database, Cpu, Activity, RefreshCw, Radio, BarChart3, Smartphone } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -288,24 +288,26 @@ export default function HeroSection() {
                       {/* Gradients */}
                       <defs>
                         <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                          <stop offset="0%" stopColor="var(--color-accent-primary)" />
-                          <stop offset="50%" stopColor="var(--color-accent-secondary)" />
-                          <stop offset="100%" stopColor="var(--color-success)" />
+                          <stop offset="0%" stopColor="var(--color-info)" />
+                          <stop offset="25%" stopColor="var(--color-warning)" />
+                          <stop offset="50%" stopColor="var(--color-danger)" />
+                          <stop offset="75%" stopColor="var(--color-success)" />
+                          <stop offset="100%" stopColor="var(--color-accent-secondary)" />
                         </linearGradient>
                       </defs>
 
                       {/* Moving particles (Framer Motion along coordinates) */}
-                      <motion.circle r="4" fill="var(--color-accent-primary)" filter="drop-shadow(0 0 4px var(--color-accent-primary))"
+                      <motion.circle r="4" fill="var(--color-info)" filter="drop-shadow(0 0 4px var(--color-info))"
                         animate={{ cx: [30, 130, 250, 370, 490] }}
                         transition={{ repeat: Infinity, duration: 2.8, ease: 'linear' }}
                         cy="40"
                       />
-                      <motion.circle r="4" fill="var(--color-accent-secondary)" filter="drop-shadow(0 0 4px var(--color-accent-secondary))"
+                      <motion.circle r="4" fill="var(--color-danger)" filter="drop-shadow(0 0 4px var(--color-danger))"
                         animate={{ cx: [30, 130, 250, 370, 490] }}
                         transition={{ repeat: Infinity, duration: 2.8, ease: 'linear', delay: 0.9 }}
                         cy="40"
                       />
-                      <motion.circle r="4" fill="var(--color-success)" filter="drop-shadow(0 0 4px var(--color-success))"
+                      <motion.circle r="4" fill="var(--color-accent-secondary)" filter="drop-shadow(0 0 4px var(--color-accent-secondary))"
                         animate={{ cx: [30, 130, 250, 370, 490] }}
                         transition={{ repeat: Infinity, duration: 2.8, ease: 'linear', delay: 1.8 }}
                         cy="40"
@@ -313,34 +315,40 @@ export default function HeroSection() {
 
                       {/* Nodes */}
                       {/* Node 1: Client */}
-                      <circle cx="30" cy="40" r="16" fill="var(--color-surface-card)" stroke="var(--color-accent-primary)" strokeWidth="2" />
-                      <text x="30" y="44" fill="var(--color-text-primary)" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">API</text>
+                      <circle cx="30" cy="40" r="16" fill="var(--color-surface-card)" stroke="var(--color-info)" strokeWidth="2" />
+                      <foreignObject x="20" y="30" width="20" height="20" className="pointer-events-none">
+                        <Smartphone size={20} style={{ color: 'var(--color-info)' }} />
+                      </foreignObject>
+                      <text x="30" y="70" fill="var(--color-text-secondary)" fontSize="10" fontWeight="600" textAnchor="middle" fontFamily="sans-serif" className="uppercase tracking-wider">Event Source</text>
 
                       {/* Node 2: Queue */}
-                      <circle cx="130" cy="40" r="16" fill="var(--color-surface-card)" stroke="var(--color-accent-primary)" strokeWidth="2" />
-                      <text x="130" y="44" fill="var(--color-text-primary)" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">Q</text>
+                      <circle cx="130" cy="40" r="16" fill="var(--color-surface-card)" stroke="var(--color-warning)" strokeWidth="2" />
+                      <foreignObject x="120" y="30" width="20" height="20" className="pointer-events-none">
+                        <Radio size={20} style={{ color: 'var(--color-warning)' }} />
+                      </foreignObject>
+                      <text x="130" y="70" fill="var(--color-text-secondary)" fontSize="10" fontWeight="600" textAnchor="middle" fontFamily="sans-serif" className="uppercase tracking-wider">RabbitMQ</text>
 
                       {/* Node 3: Consumer */}
-                      <circle cx="250" cy="40" r="16" fill="var(--color-surface-card)" stroke="var(--color-accent-secondary)" strokeWidth="2" />
-                      <text x="250" y="44" fill="var(--color-text-primary)" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">SRV</text>
+                      <circle cx="250" cy="40" r="16" fill="var(--color-surface-card)" stroke="var(--color-danger)" strokeWidth="2" />
+                      <foreignObject x="240" y="30" width="20" height="20" className="pointer-events-none">
+                        <Cpu size={20} style={{ color: 'var(--color-danger)' }} />
+                      </foreignObject>
+                      <text x="250" y="70" fill="var(--color-text-secondary)" fontSize="10" fontWeight="600" textAnchor="middle" fontFamily="sans-serif" className="uppercase tracking-wider">Consumer</text>
 
                       {/* Node 4: DB */}
-                      <circle cx="370" cy="40" r="16" fill="var(--color-surface-card)" stroke="var(--color-warning)" strokeWidth="2" />
-                      <text x="370" y="44" fill="var(--color-text-primary)" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">DB</text>
+                      <circle cx="370" cy="40" r="16" fill="var(--color-surface-card)" stroke="var(--color-success)" strokeWidth="2" />
+                      <foreignObject x="360" y="30" width="20" height="20" className="pointer-events-none">
+                        <Database size={20} style={{ color: 'var(--color-success)' }} />
+                      </foreignObject>
+                      <text x="370" y="70" fill="var(--color-text-secondary)" fontSize="10" fontWeight="600" textAnchor="middle" fontFamily="sans-serif" className="uppercase tracking-wider">Database</text>
 
                       {/* Node 5: Analytics */}
-                      <circle cx="490" cy="40" r="16" fill="var(--color-surface-card)" stroke="var(--color-success)" strokeWidth="2" />
-                      <text x="490" y="44" fill="var(--color-text-primary)" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">GRA</text>
+                      <circle cx="490" cy="40" r="16" fill="var(--color-surface-card)" stroke="var(--color-accent-secondary)" strokeWidth="2" />
+                      <foreignObject x="480" y="30" width="20" height="20" className="pointer-events-none">
+                        <BarChart3 size={20} style={{ color: 'var(--color-accent-secondary)' }} />
+                      </foreignObject>
+                      <text x="490" y="70" fill="var(--color-text-secondary)" fontSize="10" fontWeight="600" textAnchor="middle" fontFamily="sans-serif" className="uppercase tracking-wider">Analytics</text>
                     </svg>
-
-                    {/* Node Labels */}
-                    <div className="flex justify-between w-full text-[9px] text-text-secondary px-1 font-semibold uppercase tracking-wider mt-2.5">
-                      <span>Event Source</span>
-                      <span>RabbitMQ</span>
-                      <span>Consumer</span>
-                      <span>Database</span>
-                      <span>Analytics</span>
-                    </div>
                   </div>
                 </div>
               </div>
