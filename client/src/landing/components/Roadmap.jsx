@@ -8,49 +8,49 @@ const ROADMAP_ITEMS = [
     title: 'Custom Alert Rules',
     description: 'Set thresholds for error rates, latency spikes, and hit volume anomalies.',
     status: 'In Development',
-    color: '#4f46e5',
+    color: 'var(--color-accent-primary)',
   },
   {
     icon: Monitor,
     title: 'Uptime Monitoring',
     description: 'Synthetic checks to verify your API endpoints are responding correctly.',
     status: 'Planned',
-    color: '#06b6d4',
+    color: 'var(--color-accent-secondary)',
   },
   {
     icon: Webhook,
     title: 'Webhook Integrations',
     description: 'Send alerts to Slack, Discord, Teams, PagerDuty, or any webhook endpoint.',
     status: 'Planned',
-    color: '#8b5cf6',
+    color: 'var(--color-accent-primary)',
   },
   {
     icon: Package,
     title: 'SDK & CLI',
     description: 'npm package and CLI tool for seamless integration into your CI/CD pipeline.',
     status: 'Planned',
-    color: '#f59e0b',
+    color: 'var(--color-warning)',
   },
   {
     icon: Wifi,
     title: 'Real-time WebSockets',
     description: 'Live streaming dashboard with instant updates — no page refresh needed.',
     status: 'Planned',
-    color: '#10b981',
+    color: 'var(--color-success)',
   },
   {
     icon: Gauge,
     title: 'SLA Monitoring',
     description: 'Track SLA compliance with automated reporting and burn-rate alerts.',
     status: 'Exploring',
-    color: '#ec4899',
+    color: 'var(--color-info)',
   },
 ];
 
 const STATUS_COLORS = {
-  'In Development': { bg: 'bg-indigo-500/10', text: 'text-indigo-400', dot: 'bg-indigo-400' },
-  'Planned': { bg: 'bg-cyan-500/10', text: 'text-cyan-400', dot: 'bg-cyan-400' },
-  'Exploring': { bg: 'bg-pink-500/10', text: 'text-pink-400', dot: 'bg-pink-400' },
+  'In Development': { bg: 'bg-accent-primary/10', text: 'text-accent-primary', dot: 'bg-accent-primary' },
+  'Planned': { bg: 'bg-accent-secondary/10', text: 'text-accent-secondary', dot: 'bg-accent-secondary' },
+  'Exploring': { bg: 'bg-info-bg', text: 'text-info', dot: 'bg-info' },
 };
 
 export default function Roadmap() {
@@ -94,7 +94,7 @@ export default function Roadmap() {
                 <div className="flex items-start justify-between mb-4">
                   <div
                     className="w-11 h-11 rounded-xl flex items-center justify-center"
-                    style={{ backgroundColor: `${item.color}15` }}
+                    style={{ backgroundColor: `color-mix(in srgb, ${item.color} 15%, transparent)` }}
                   >
                     <item.icon size={22} style={{ color: item.color }} />
                   </div>

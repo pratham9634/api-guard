@@ -105,7 +105,7 @@ export default function Testimonials() {
             {/* Stars */}
             <div className="flex justify-center gap-1 mb-6">
               {[...Array(TESTIMONIALS[current].rating)].map((_, i) => (
-                <Star key={i} size={18} className="text-amber-400 fill-amber-400" />
+                <Star key={i} size={18} className="text-warning fill-warning" />
               ))}
             </div>
 

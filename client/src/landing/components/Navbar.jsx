@@ -7,9 +7,9 @@ import { useAuth } from '../../context/AuthContext';
 import RequestAccessModal from './RequestAccessModal';
 
 const NAV_LINKS = [
-  { label: 'Features', href: '#features' },
-  { label: 'How It Works', href: '#how-it-works' },
+  { label: 'Showcase', href: '#features' },
   { label: 'Architecture', href: '#architecture' },
+  { label: 'Playground', href: '#playground' },
   { label: 'Pricing', href: '#pricing' },
   { label: 'FAQ', href: '#faq' },
 ];
@@ -18,12 +18,6 @@ export default function Navbar({ theme, toggleTheme }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const { isAuthenticated, logout } = useAuth();
-
-  const scrollTo = (href) => {
-    setMobileOpen(false);
-    const el = document.querySelector(href);
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
-  };
 
   return (
     <>
@@ -53,15 +47,15 @@ export default function Navbar({ theme, toggleTheme }) {
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-1">
               {NAV_LINKS.map((link) => (
-                <button
+                <a
                   key={link.href}
-                  onClick={() => scrollTo(link.href)}
+                  href={link.href}
                   className="px-3.5 py-2 text-sm font-medium text-text-secondary
                            hover:text-text-primary transition-colors duration-200
-                           rounded-lg hover:bg-surface-card/50 cursor-pointer focus:outline-none"
+                           rounded-lg hover:bg-surface-card/50"
                 >
                   {link.label}
-                </button>
+                </a>
               ))}
             </div>
 
@@ -136,16 +130,16 @@ export default function Navbar({ theme, toggleTheme }) {
           >
             <div className="mx-4 glass-landing p-4 flex flex-col gap-1 shadow-2xl">
               {NAV_LINKS.map((link) => (
-                <button
+                <a
                   key={link.href}
-                  onClick={() => scrollTo(link.href)}
+                  href={link.href}
+                  onClick={() => setMobileOpen(false)}
                   className="px-4 py-3 text-sm font-medium text-text-secondary
                            hover:text-text-primary hover:bg-surface-card/50
-                           rounded-lg transition-colors duration-200 text-left
-                           cursor-pointer focus:outline-none"
+                           rounded-lg transition-colors duration-200 text-left"
                 >
                   {link.label}
-                </button>
+                </a>
               ))}
               <div className="section-divider my-2" />
               {isAuthenticated ? (
