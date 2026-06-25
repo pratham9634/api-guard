@@ -1,13 +1,33 @@
 
 
+/**
+ * @file CircuitBreaker.js
+ * @description Implements the Circuit Breaker pattern.
+ * Prevents requests to downstream services (like RabbitMQ) when they are failing, avoiding resource exhaustion.
+ * Transitions through CLOSED (healthy), OPEN (failing, rejecting requests), and HALF_OPEN (probing recovery) states.
+ */
+
+/**
+ * States the Circuit Breaker can occupy.
+ */
 export const CircuitState = Object.freeze({
-    CLOSED: 'CLOSED',
-    OPEN: 'OPEN',
-    HALF_OPEN: 'HALF_OPEN'
+    CLOSED: 'CLOSED', // Healthy state; all requests are allowed.
+    OPEN: 'OPEN',     // Error state; requests are blocked/short-circuited.
+    HALF_OPEN: 'HALF_OPEN' // Trial state; limited requests are allowed to test recovery.
 })
 
+/**
+ * CircuitBreaker class to track failure counts and block execution if thresholds are breached.
+ */
 export class CircuitBreaker{
 
+    /**
+     * @param {Object} [opts={}] - Configuration options.
+     * @param {number} [opts.failureThreshold=5] - Number of failures allowed before opening the circuit.
+     * @param {number} [opts.cooldownMs=30000] - Duration in milliseconds to wait in OPEN state before trying recovery.
+     * @param {number} [opts.halfOpenMaxAttempts=3] - Number of successful probes required in HALF_OPEN to close the circuit.
+     * @param {Object} [opts.logger=console] - Logger instance.
+     */
     constructor(opts={}){
         this.failureThreshold = opts.failureThreshold ?? 5;
         this.cooldownMs = opts.cooldownMs ?? 30_000;
@@ -21,10 +41,20 @@ export class CircuitBreaker{
         this._halfOpenSuccesses = 0; 
     }
 
+    /**
+     * Checks if cooldown period has elapsed since the last failure occurred.
+     * @private
+     * @returns {boolean}
+     */
     _cooldownElapsed(){
         return Date.now() - this._lastFailureTime >= this.cooldownMs;
     }
 
+    /**
+     * Transitions the circuit breaker to a new state and logs the change.
+     * @private
+     * @param {string} newState - The state value to transition into.
+     */
     _transitionTo(newState){
         const prev = this._state;
         this._state = newState;
@@ -38,6 +68,10 @@ export class CircuitBreaker{
         }
     }
 
+    /**
+     * Opens the circuit, recording the timestamp, and triggering cooldown period.
+     * @private
+     */
     _openCircuit(){
         this._lastFailureTime = Date.now();
         this._transitionTo(CircuitState.OPEN);
@@ -47,6 +81,10 @@ export class CircuitBreaker{
         });
     }
 
+    /**
+     * Resets failure counters and puts the circuit back into CLOSED (healthy) state.
+     * @private
+     */
     _reset(){
         this._state = CircuitState.CLOSED;
         this._failures = 0;
@@ -55,6 +93,10 @@ export class CircuitBreaker{
         this.logger.info('[CircuitBreaker] RESET');
     }
 
+    /**
+     * Returns the current state, dynamically transitioning from OPEN to HALF_OPEN if cooldown has elapsed.
+     * @type {string}
+     */
     get state() {
         if (this._state === CircuitState.OPEN && this._cooldownElapsed()) {
             this._transitionTo(CircuitState.HALF_OPEN);
@@ -63,6 +105,13 @@ export class CircuitBreaker{
         return this._state
     }
 
+    /**
+     * Checks if a request is allowed to proceed.
+     * In CLOSED state, all are allowed.
+     * In OPEN state, none are allowed.
+     * In HALF_OPEN state, up to `halfOpenMaxAttempts` requests are allowed.
+     * @returns {boolean} True if the execution request is allowed, false if blocked.
+     */
     allowRequest() {
         const current = this.state;
 
@@ -94,6 +143,10 @@ export class CircuitBreaker{
         return false;
     }
 
+    /**
+     * Event callback recorded on a successful downstream invocation.
+     * Resets failure counters if CLOSED, and transitions to CLOSED if HALF_OPEN completes success quota.
+     */
     onSuccess(){
         this.logger.info('[CircuitBreaker] success recorded', {
             state: this._state,
@@ -118,6 +171,10 @@ export class CircuitBreaker{
         }
     };
 
+    /**
+     * Event callback recorded on a failed downstream invocation.
+     * Increments failure counter. Trips circuit to OPEN if threshold is crossed.
+     */
     onFailure(){
         this.logger.error('[CircuitBreaker] failure recorded', {
             state: this._state,
@@ -140,6 +197,10 @@ export class CircuitBreaker{
         }
     };
 
+    /**
+     * Generates a structural snapshot of the circuit status.
+     * @returns {Object}
+     */
     snapshot() {
         return {
             state: this.state,

@@ -1,3 +1,9 @@
+/**
+ * @file App.jsx
+ * @description Main application routing configuration.
+ * Configures public, protected, and role-restricted dashboard paths using React Router v6.
+ */
+
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppLayout from './components/Layout/AppLayout';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -16,16 +22,21 @@ import AccessRequests from './pages/AccessRequests';
 import Playground from './pages/Playground';
 import { ROLES } from './utils/constants';
 
+/**
+ * Root React application component containing router layouts.
+ * 
+ * @returns {React.ReactElement}
+ */
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public routes */}
+        {/* Public routes accessible to everyone */}
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/onboard" element={<Onboard />} />
 
-        {/* Protected routes with layout */}
+        {/* Protected routes wrapped in AppLayout and Auth ProtectedRoute guard */}
         <Route
           path="/app"
           element={
@@ -37,6 +48,8 @@ export default function App() {
           <Route index element={<Navigate to="/app/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="analytics" element={<Analytics />} />
+          
+          {/* Admin-only client organization listing page */}
           <Route
             path="clients"
             element={
@@ -45,6 +58,7 @@ export default function App() {
               </RoleGuard>
             }
           />
+          {/* Admin-only client configuration edit page */}
           <Route
             path="clients/:id"
             element={
@@ -53,6 +67,7 @@ export default function App() {
               </RoleGuard>
             }
           />
+          {/* Admin-only signup onboarding request approvals page */}
           <Route
             path="requests"
             element={
@@ -61,16 +76,17 @@ export default function App() {
               </RoleGuard>
             }
           />
+          
           <Route path="api-keys" element={<ApiKeys />} />
           <Route path="playground" element={<Playground />} />
           <Route path="users" element={<Users />} />
           <Route path="profile" element={<Profile />} />
         </Route>
 
-        {/* Legacy redirects */}
+        {/* Legacy redirects for smooth backward URL compatibility */}
         <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
 
-        {/* Catch all */}
+        {/* Catch-all route routing invalid routes back to the root landing page */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

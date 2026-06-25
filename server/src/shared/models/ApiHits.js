@@ -1,3 +1,9 @@
+/**
+ * @file ApiHits.js
+ * @description Mongoose schema for raw API hit events.
+ * Manages high-throughput individual API logging events with a 30-day auto-expiry (TTL) index policy.
+ */
+
 import mongoose from 'mongoose';
 
 /**
@@ -67,10 +73,12 @@ const apiHitSchema = new mongoose.Schema(
     }
 );
 
-// Create compound indexes for common queries
+// Create compound indexes for common query optimization
 apiHitSchema.index({ clientId: 1, serviceName: 1, endpoint: 1, timestamp: -1 });
 apiHitSchema.index({ clientId: 1, timestamp: -1, statusCode: 1 });
 apiHitSchema.index({ apiKeyId: 1, timestamp: -1 });
+
+// TTL index to automatically purge records older than 30 days (2,592,000 seconds)
 apiHitSchema.index({ timestamp: 1 }, { expireAfterSeconds: 2592000 });
 
 const ApiHit = mongoose.model('ApiHit', apiHitSchema);

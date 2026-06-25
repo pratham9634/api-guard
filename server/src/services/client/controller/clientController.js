@@ -1,7 +1,14 @@
+/**
+ * @file clientController.js
+ * @description Controller for Client tenant operations.
+ * Handles client registrations, API key CRUD requests, access requests approval workflows,
+ * user status management, and cascade deletions.
+ */
+
 import ResponseFormatter from "../../../shared/utils/responseFormatter.js"
 
 /**
- * ClientController class to handle client related requests
+ * ClientController class to handle client related requests.
  */
 export class ClientController {
     /**
@@ -27,10 +34,10 @@ export class ClientController {
 
     /**
      * Create a new client, only accessible by super admins
-     * @param {Request} req - Express request object
-     * @param {Response} res - Express response object
-     * @param {Function} next - Express next function for error handling
-     * @returns {Promise<Response>} - JSON response with created client data or error message
+     * @param {import('express').Request} req - Express request object
+     * @param {import('express').Response} res - Express response object
+     * @param {import('express').NextFunction} next - Express next function for error handling
+     * @returns {Promise<import('express').Response>} - JSON response with created client data or error message
      */
     async createClient(req, res, next) {
         try {
@@ -49,10 +56,10 @@ export class ClientController {
 
     /**
      * Create a new client user for a specific client
-     * @param {Request} req - Express request object
-     * @param {Response} res - Express response object
-     * @param {Function} next - Express next function for error handling
-     * @returns {Promise<Response>} - JSON response with created client user data or error message
+     * @param {import('express').Request} req - Express request object
+     * @param {import('express').Response} res - Express response object
+     * @param {import('express').NextFunction} next - Express next function for error handling
+     * @returns {Promise<import('express').Response>} - JSON response with created client user data or error message
      */
     async createClientUser(req, res, next) {
         try {
@@ -67,10 +74,10 @@ export class ClientController {
 
     /**
      * Create a new API key for a specific client
-     * @param {Request} req - Express request object
-     * @param {Response} res - Express response object
-     * @param {Function} next - Express next function for error handling
-     * @returns {Promise<Response>} - JSON response with created API key data or error message
+     * @param {import('express').Request} req - Express request object
+     * @param {import('express').Response} res - Express response object
+     * @param {import('express').NextFunction} next - Express next function for error handling
+     * @returns {Promise<import('express').Response>} - JSON response with created API key data or error message
      */
     async createApiKey(req, res, next) {
         try {
@@ -84,11 +91,11 @@ export class ClientController {
 
     /**
      * Get all API keys for a specific client
-     * @param {Request} req - Express request object
-     * @param {Response} res - Express response object
-     * @param {Function} next - Express next function for error handling
-     * @returns {Promise<Response>} - JSON response with fetched API keys data or error message
- */
+     * @param {import('express').Request} req - Express request object
+     * @param {import('express').Response} res - Express response object
+     * @param {import('express').NextFunction} next - Express next function for error handling
+     * @returns {Promise<import('express').Response>} - JSON response with fetched API keys data or error message
+     */
     async getClientApiKeys(req, res, next) {
         try {
             const { clientId } = req.params;
@@ -100,8 +107,11 @@ export class ClientController {
     }
 
 
-        /**
+    /**
      * Get all clients (super_admin) or own client (client users)
+     * @param {import('express').Request} req - Express request
+     * @param {import('express').Response} res - Express response
+     * @param {import('express').NextFunction} next - Express next middleware
      */
     async getClients(req, res, next) {
         try {
@@ -114,6 +124,9 @@ export class ClientController {
 
     /**
      * Get single client details
+     * @param {import('express').Request} req - Express request
+     * @param {import('express').Response} res - Express response
+     * @param {import('express').NextFunction} next - Express next middleware
      */
     async getClientById(req, res, next) {
         try {
@@ -126,7 +139,10 @@ export class ClientController {
     }
 
     /**
-     * Update client (name, description, settings, website, email)
+     * Update client details (name, description, settings)
+     * @param {import('express').Request} req - Express request
+     * @param {import('express').Response} res - Express response
+     * @param {import('express').NextFunction} next - Express next middleware
      */
     async updateClient(req, res, next) {
         try {
@@ -140,6 +156,9 @@ export class ClientController {
 
     /**
      * Deactivate client (soft delete)
+     * @param {import('express').Request} req - Express request
+     * @param {import('express').Response} res - Express response
+     * @param {import('express').NextFunction} next - Express next middleware
      */
     async deactivateClient(req, res, next) {
         try {
@@ -153,6 +172,12 @@ export class ClientController {
 
     // --- Access Requests Admin Methods ---
 
+    /**
+     * Lists onboarding requests (super_admin only)
+     * @param {import('express').Request} req - Express request
+     * @param {import('express').Response} res - Express response
+     * @param {import('express').NextFunction} next - Express next middleware
+     */
     async getAccessRequests(req, res, next) {
         try {
             const requests = await this.clientService.getAccessRequests(req.user);
@@ -162,6 +187,12 @@ export class ClientController {
         }
     }
 
+    /**
+     * Approves onboarding request, provisioning client and admin user (super_admin only)
+     * @param {import('express').Request} req - Express request
+     * @param {import('express').Response} res - Express response
+     * @param {import('express').NextFunction} next - Express next middleware
+     */
     async approveAccessRequest(req, res, next) {
         try {
             const { requestId } = req.params;
@@ -172,6 +203,12 @@ export class ClientController {
         }
     }
 
+    /**
+     * Rejects onboarding request (super_admin only)
+     * @param {import('express').Request} req - Express request
+     * @param {import('express').Response} res - Express response
+     * @param {import('express').NextFunction} next - Express next middleware
+     */
     async rejectAccessRequest(req, res, next) {
         try {
             const { requestId } = req.params;
@@ -184,6 +221,9 @@ export class ClientController {
 
     /**
      * List users for a client
+     * @param {import('express').Request} req - Express request
+     * @param {import('express').Response} res - Express response
+     * @param {import('express').NextFunction} next - Express next middleware
      */
     async getClientUsers(req, res, next) {
         try {
@@ -195,8 +235,11 @@ export class ClientController {
         }
     }
 
-        /**
+    /**
      * Revoke / deactivate an API key
+     * @param {import('express').Request} req - Express request
+     * @param {import('express').Response} res - Express response
+     * @param {import('express').NextFunction} next - Express next middleware
      */
     async revokeApiKey(req, res, next) {
         try {
@@ -210,6 +253,9 @@ export class ClientController {
 
     /**
      * Rotate an API key
+     * @param {import('express').Request} req - Express request
+     * @param {import('express').Response} res - Express response
+     * @param {import('express').NextFunction} next - Express next middleware
      */
     async rotateApiKey(req, res, next) {
         try {
@@ -223,6 +269,9 @@ export class ClientController {
 
     /**
      * Delete an API key
+     * @param {import('express').Request} req - Express request
+     * @param {import('express').Response} res - Express response
+     * @param {import('express').NextFunction} next - Express next middleware
      */
     async deleteApiKey(req, res, next) {
         try {
@@ -234,8 +283,11 @@ export class ClientController {
         }
     }
 
-        /**
+    /**
      * List all users (super_admin only)
+     * @param {import('express').Request} req - Express request
+     * @param {import('express').Response} res - Express response
+     * @param {import('express').NextFunction} next - Express next middleware
      */
     async getAllUsers(req, res, next) {
         try {
@@ -247,7 +299,10 @@ export class ClientController {
     }
 
     /**
-     * Activate/deactivate user
+     * Activate/deactivate user (super_admin only)
+     * @param {import('express').Request} req - Express request
+     * @param {import('express').Response} res - Express response
+     * @param {import('express').NextFunction} next - Express next middleware
      */
     async updateUserStatus(req, res, next) {
         try {
@@ -261,7 +316,10 @@ export class ClientController {
     }
 
     /**
-     * Change user role
+     * Change user role (super_admin only)
+     * @param {import('express').Request} req - Express request
+     * @param {import('express').Response} res - Express response
+     * @param {import('express').NextFunction} next - Express next middleware
      */
     async updateUserRole(req, res, next) {
         try {
@@ -275,7 +333,10 @@ export class ClientController {
     }
 
     /**
-     * Delete user completely
+     * Delete user completely (super_admin only)
+     * @param {import('express').Request} req - Express request
+     * @param {import('express').Response} res - Express response
+     * @param {import('express').NextFunction} next - Express next middleware
      */
     async deleteUser(req, res, next) {
         try {
@@ -288,7 +349,10 @@ export class ClientController {
     }
 
     /**
-     * Delete client completely
+     * Delete client completely (super_admin only)
+     * @param {import('express').Request} req - Express request
+     * @param {import('express').Response} res - Express response
+     * @param {import('express').NextFunction} next - Express next middleware
      */
     async deleteClientCompletely(req, res, next) {
         try {
@@ -301,7 +365,10 @@ export class ClientController {
     }
 
     /**
-     * Delete access request completely
+     * Delete access request completely (super_admin only)
+     * @param {import('express').Request} req - Express request
+     * @param {import('express').Response} res - Express response
+     * @param {import('express').NextFunction} next - Express next middleware
      */
     async deleteAccessRequest(req, res, next) {
         try {

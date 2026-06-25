@@ -1,7 +1,13 @@
+/**
+ * @file authSchema.js
+ * @description Validation rules for request fields in the Authentication module endpoints.
+ * Processed by the validate() middleware helper.
+ */
+
 import { isValidRole } from "../../../shared/constants/roles.js";
 
 /**
- * Validation schemas for the Auth module.
+ * Validation rules for onboarding the first super_admin user.
  */
 export const onboardSuperAdminSchema = {
     username: {
@@ -17,7 +23,7 @@ export const onboardSuperAdminSchema = {
 }
 
 /**
- * Validation schema for user registration.
+ * Validation rules for user creation / registration endpoints.
  */
 export const registrationSchema = {
     username: {
@@ -32,6 +38,7 @@ export const registrationSchema = {
     },
     role: {
         required: false,
+        // Optional field; if supplied, checks role against ROLES constants array
         custom: (value) => {
             if (!value) return null;
             return isValidRole(value) ? null : 'Invalid role';
@@ -40,7 +47,7 @@ export const registrationSchema = {
 }
 
 /**
- * Validation schema for user login.
+ * Validation rules for credentials login endpoints.
  */
 export const loginSchema = {
     username: { required: true },

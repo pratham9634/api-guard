@@ -1,5 +1,14 @@
+/**
+ * @file Client.js
+ * @description Mongoose schema definition for tenant Clients.
+ * Models registered organizations/companies using the system, including data retention policy configurations.
+ */
+
 import mongoose from 'mongoose';
 
+/**
+ * Client Mongoose Schema.
+ */
 const clientSchema = new mongoose.Schema(
     {
         name: {
@@ -15,6 +24,7 @@ const clientSchema = new mongoose.Schema(
             unique: true,
             trim: true,
             lowercase: true,
+            // Slugs must only contain lowercase alphanumeric values and dashes
             match: /^[a-z0-9-]+$/,
         },
         email: {
@@ -42,6 +52,7 @@ const clientSchema = new mongoose.Schema(
             default: true,
         },
         settings: {
+            // Retention period (in days) for this client's raw API hit documents
             dataRetentionDays: {
                 type: Number,
                 default: 30,

@@ -1,3 +1,11 @@
+/**
+ * @file consumer.js
+ * @description RabbitMQ message consumer for the Processor microservice.
+ * Subscribes to the API hits queue, handles message schemas with Zod, validates,
+ * tracks idempotency, handles circuit breaker triggers, and routes messages
+ * to the ProcessorService or back to retry/DLQ queues on failure.
+ */
+
 import { z } from 'zod';
 import rabbitmq from '../../shared/config/rabbitmq.js';
 import mongodb from '../../shared/config/mongodb.js';
@@ -9,6 +17,10 @@ import { EVENT_TYPES } from '../../shared/events/eventContracts.js';
 import { RetryStrategy, isRetryable } from '../../shared/events/producer/RetryStrategy.js';
 import { CircuitBreaker } from '../../shared/events/producer/CircuitBreaker.js';
 
+/**
+ * Zod validation schema for RabbitMQ consumer events.
+ * Validates structural contracts for inbound API hit messages.
+ */
 const messageSchema = z.object({
     type: z.enum([EVENT_TYPES.API_HIT]),
     data: z.record(z.string(), z.unknown()),
@@ -16,7 +28,22 @@ const messageSchema = z.object({
     timestamp: z.union([z.string(), z.number()]).optional(),
 });
 
+/**
+ * EventConsumer class responsible for subscribing to the ingestion queue,
+ * processing messages, and handling retries/dead-lettering (DLQ).
+ */
 class EventConsumer {
+    /**
+     * @param {Object} dependencies
+     * @param {Object} dependencies.processorService - Core processor service logic.
+     * @param {Object} dependencies.rabbitmq - RabbitMQ configuration/wrapper.
+     * @param {Object} dependencies.mongodb - MongoDB client connection manager.
+     * @param {Object} dependencies.postgres - Postgres database pool wrapper.
+     * @param {Object} dependencies.config - Server system configuration values.
+     * @param {Object} dependencies.logger - Logging system interface.
+     * @param {RetryStrategy} dependencies.retryStrategy - Backoff logic generator.
+     * @param {CircuitBreaker} dependencies.circuitBreaker - Fault protection module.
+     */
     constructor({ processorService, rabbitmq, mongodb, postgres, config, logger, retryStrategy, circuitBreaker }) {
         this._processorService = processorService;
         this._rabbitmq = rabbitmq;
@@ -30,11 +57,21 @@ class EventConsumer {
         this.isRunning = false;
         this.channel = null;
         this._stats = { processed: 0, failed: 0, retried: 0, dlqRouted: 0, lastProcessedAt: null };
+        
+        // Sliding window of processed message IDs to implement in-memory idempotency
         this._processedIds = new Set();
-        this._poisonMessages = new Map(); // messageType -> consecutive failure count
+        
+        // Tracks consecutive failures for poison message detection by type
+        this._poisonMessages = new Map();
     };
 
 
+    /**
+     * Starts the consumer by connecting to databases, initializing RabbitMQ channels,
+     * setting channel prefetch limits, and launching the subscribe process.
+     * 
+     * @returns {Promise<void>}
+     */
     async start() {
         try {
             await this._connectDatabases();
@@ -71,19 +108,31 @@ class EventConsumer {
         }
     }
 
+    /**
+     * Closes the active AMQP channel and toggles the running flag to false.
+     * 
+     * @private
+     * @returns {Promise<void>}
+     */
     async _cleanup() {
         try {
             this.isRunning = false;
             if (this.channel) {
                 await this.channel.close();
-                this.channel = null
+                this.channel = null;
             }
         } catch (error) {
             this._logger.error('Error during cleanup:', error);
-
         }
     }
 
+    /**
+     * Helper to establish connections to MongoDB and Postgres databases concurrently.
+     * Implements linear backoff retry strategies on database initialization failures.
+     * 
+     * @private
+     * @returns {Promise<void>}
+     */
     async _connectDatabases() {
         const maxRetries = 5;
         let retries = 0;
@@ -105,15 +154,22 @@ class EventConsumer {
                 if (retries >= maxRetries) {
                     throw new Error(`Failed to connect to databases after ${maxRetries} attempts`);
                 }
+                // Back off based on the attempt number
                 await new Promise(resolve => setTimeout(resolve, 5000 * retries));
             }
         }
     };
 
+    /**
+     * Triggers RabbitMQ reconnection cycle after unexpected channel closures.
+     * 
+     * @private
+     * @returns {Promise<void>}
+     */
     async _reconnect() {
         try {
-            await new Promise(resolve => setTimeout(resolve, 5000))
-            this.channel = await this._rabbitmq.connect()
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            this.channel = await this._rabbitmq.connect();
             const prefetch = this._config.consumer?.prefetch || 10;
             this.channel.prefetch(prefetch);
 
@@ -130,10 +186,10 @@ class EventConsumer {
             await this.channel.consume(
                 this._config.rabbitmq.queue,
                 async (msg) => {
-                    if (msg !== null) await this._handleMessage(msg)
+                    if (msg !== null) await this._handleMessage(msg);
                 },
                 { noAck: false, consumerTag: `consumer-${Date.now()}` }
-            )
+            );
         } catch (error) {
             this._logger.error('Failed to reconnect:', error);
             if (this.isRunning) {
@@ -142,9 +198,19 @@ class EventConsumer {
         }
     }
 
+    /**
+     * Root message router handler invoked for every new payload consumed.
+     * Evaluates circuit breaker, parses parameters, performs idempotency checking,
+     * and coordinates positive/negative acknowledgements.
+     * 
+     * @private
+     * @param {Object} msg - Raw RabbitMQ delivery message object.
+     * @returns {Promise<void>}
+     */
     async _handleMessage(msg) {
         if (!this._circuitBreaker.allowRequest()) {
             this._logger.warn('Circuit breaker open, requeuing message');
+            // Nack with requeue=true so another consumer (or this one when closed) can take it
             this.channel.nack(msg, false, true);
             return;
         }
@@ -155,7 +221,7 @@ class EventConsumer {
         try {
             messageData = this._parseMessage(msg);
 
-            // Idempotency
+            // Check if this message was already processed successfully to prevent duplicate processing
             if (this._processedIds.has(messageData.messageId)) {
                 this._logger.debug('Duplicate message skipped', { messageId: messageData.messageId });
                 this.channel.ack(msg);
@@ -166,21 +232,29 @@ class EventConsumer {
 
             this.channel.ack(msg);
             this._circuitBreaker.onSuccess();
-            this._stats.processed++
+            this._stats.processed++;
             this._stats.lastProcessedAt = new Date();
 
+            // Record ID to prevent duplicate hits (implementing a sliding window up to 100k records)
             this._processedIds.add(messageData.messageId);
             if (this._processedIds.size > 100_000) {
-                const first = this._processedIds.values().next().value // [2,3,4]
-                this._processedIds.delete(first)
+                const first = this._processedIds.values().next().value;
+                this._processedIds.delete(first);
             };
 
             this._poisonMessages.delete(messageData.type);
         } catch (error) {
-            await this._handleProcessingError(error, msg, messageData, startTime)
+            await this._handleProcessingError(error, msg, messageData, startTime);
         }
     }
 
+    /**
+     * Parses the buffer contents of the message into structured JSON and validates schema via Zod.
+     * 
+     * @private
+     * @param {Object} msg - Raw message delivery object.
+     * @returns {Object} Parsed and validated message object, decorated with headers metadata.
+     */
     _parseMessage(msg) {
         try {
             const content = msg.content.toString();
@@ -201,10 +275,17 @@ class EventConsumer {
         }
     };
 
+    /**
+     * Routes the message details into the respective processing handler.
+     * 
+     * @private
+     * @param {Object} messageData - Parsed contract object.
+     * @returns {Promise<void>}
+     */
     async _processMessage(messageData) {
         switch (messageData.type) {
             case EVENT_TYPES.API_HIT:
-                await this._processorService.processEvent(messageData.data)
+                await this._processorService.processEvent(messageData.data);
                 break;
 
             default:
@@ -212,8 +293,19 @@ class EventConsumer {
         }
     };
 
+    /**
+     * Error handler triggered on parsing failures or repository save errors.
+     * Decides whether to trigger a retry loop or route directly to DLQ.
+     * 
+     * @private
+     * @param {Error} error - Thrown processing exception.
+     * @param {Object} msg - Raw AMQP message object.
+     * @param {Object|null} messageData - Parsed message object.
+     * @param {number} startTime - Epoch start timestamp.
+     * @returns {Promise<void>}
+     */
     async _handleProcessingError(error, msg, messageData, startTime) {
-        const messgeId = messageData?.messageId || msg.properties?.messageId || 'unknown';
+        const messageId = messageData?.messageId || msg.properties?.messageId || 'unknown';
         const retryCount = messageData?.retryCount || 0;
         this._circuitBreaker.onFailure();
         this._stats.failed++;
@@ -225,7 +317,7 @@ class EventConsumer {
             this._logger.error('Poison message pattern detected', { eventType, consecutiveFailures: poisonCount });
         };
 
-        // Non-retryable errors go straight to DLQ
+        // If error type is non-retryable (e.g. database schema mismatch) or retry count is exceeded, send to DLQ
         if (!isRetryable(error) || !this._retryStrategy.shouldRetry(retryCount)) {
             await this._sendToDLQ(msg, error, retryCount >= this._retryStrategy.maxRetries ? 'MAX_RETRIES_EXCEEDED' : 'NON_RETRYABLE');
             return;
@@ -234,6 +326,16 @@ class EventConsumer {
         await this._retryMessage(msg, retryCount);
     };
 
+    /**
+     * Dispatches the failed message content to the dead letter queue (DLQ) for manual inspection,
+     * and acknowledges the original message from the source queue.
+     * 
+     * @private
+     * @param {Object} msg - Raw source message.
+     * @param {Error} error - Source failure exception details.
+     * @param {string} reason - Code summarizing DLQ routing cause.
+     * @returns {Promise<void>}
+     */
     async _sendToDLQ(msg, error, reason) {
         try {
             const dlqName = `${this._config.rabbitmq.queue}.dlq`;
@@ -247,18 +349,27 @@ class EventConsumer {
                     'x-dlq-timestamp': Date.now(),
                     'x-original-queue': this._config.rabbitmq.queue,
                 },
-            })
+            });
 
             this.channel.ack(msg);
-            this._stats.dlqRouted++
+            this._stats.dlqRouted++;
         } catch (error) {
             this._logger.error('Failed to send message to DLQ:', error);
+            // Requeue=false to prevent infinite loops if RabbitMQ itself is in an unstable state
             this.channel.nack(msg, false, false);
         }
     };
 
+    /**
+     * Schedules a deferred retry republish event back to the main queue based on the backoff strategy.
+     * 
+     * @private
+     * @param {Object} msg - Raw message payload.
+     * @param {number} retryCount - Current attempt iteration count.
+     * @returns {Promise<void>}
+     */
     async _retryMessage(msg, retryCount) {
-        const delay = this._retryStrategy.delay(retryCount)
+        const delay = this._retryStrategy.delay(retryCount);
 
         const retryHeaders = {
             ...msg.properties.headers,
@@ -268,6 +379,7 @@ class EventConsumer {
             'x-original-queue': this._config.rabbitmq.queue,
         };
 
+        // Use standard JS timeout to simulate delayed retry publishing
         setTimeout(() => {
             try {
                 this.channel.sendToQueue(this._config.rabbitmq.queue, msg.content, { ...msg.properties, headers: retryHeaders });
@@ -286,6 +398,11 @@ class EventConsumer {
         this._stats.retried++;
     };
 
+    /**
+     * Stops the event consumer by cleaning up channel connections and closing active database pools.
+     * 
+     * @returns {Promise<void>}
+     */
     async stop() {
         try {
             await this._cleanup();
@@ -301,6 +418,7 @@ class EventConsumer {
     }
 }
 
+// Global retry strategy for backoff increments
 const retryStrategy = new RetryStrategy({
     maxRetries: config.rabbitmq.retryAttempts,
     baseDelayMs: config.rabbitmq.retryDelay,
@@ -308,6 +426,7 @@ const retryStrategy = new RetryStrategy({
     jitterFactor: 0.3,
 });
 
+// Circuit breaker to avoid flooding database connections when SQL or Mongo are down
 const circuitBreaker = new CircuitBreaker({
     failureThreshold: 5,
     cooldownMs: 30_000,
@@ -315,6 +434,7 @@ const circuitBreaker = new CircuitBreaker({
     logger,
 });
 
+// Consumer singleton instance initialization
 const consumer = new EventConsumer({
     processorService: processorContainer.services.processorService,
     rabbitmq,
@@ -326,6 +446,12 @@ const consumer = new EventConsumer({
     circuitBreaker,
 });
 
+/**
+ * Loops startup consumer connection attempts to withstand temporary Docker/service startup lag.
+ * Exits the process if startup retries fail.
+ * 
+ * @returns {Promise<void>}
+ */
 async function startConsumerWithRetry() {
     const startupRetry = new RetryStrategy({ maxRetries: 5, baseDelayMs: 5000, maxDelayMs: 30_000 });
     let attempt = 0;
@@ -350,6 +476,7 @@ async function startConsumerWithRetry() {
     }
 }
 
+// Register gracefull termination signal listeners
 process.on('SIGINT', async () => {
     logger.info('Received SIGINT, shutting down gracefully...');
     await consumer.stop();
@@ -372,6 +499,7 @@ process.on('unhandledRejection', (reason, promise) => {
     process.exit(1);
 });
 
+// Execute the bootstrap process
 startConsumerWithRetry();
 
 export default consumer;

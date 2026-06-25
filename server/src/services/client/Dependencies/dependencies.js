@@ -1,3 +1,9 @@
+/**
+ * @file dependencies.js
+ * @description Dependency Injection (DI) container initialization for the Client module.
+ * Instantiates the ClientRepository, ApiKeyRepository, UserRepository, ClientService, and ClientController.
+ */
+
 import MongoClientRepository from "../repository/ClientRepository.js"
 import MongoApiKeyRepository from "../repository/ApiKeyRepository.js"
 import MongoUserRepository from "../../auth/repository/UserRepository.js";
@@ -5,8 +11,14 @@ import { ClientService } from "../services/clientService.js";
 import { ClientController } from "../controller/clientController.js";
 import authContainer from "../../auth/Dependencies/dependencies.js"
 
+/**
+ * Dependency Injection Container for the Client module.
+ */
 class Container {
-    
+    /**
+     * Bootstraps the module instances.
+     * Hooks MongoClientRepository, MongoApiKeyRepository, MongoUserRepository, ClientService, and ClientController.
+     */
     static init() {
         const repositories = {
             clientRepository: MongoClientRepository,

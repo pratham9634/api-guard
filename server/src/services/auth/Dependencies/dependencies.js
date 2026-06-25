@@ -1,13 +1,21 @@
+/**
+ * @file dependencies.js
+ * @description Dependency Injection (DI) container for the Auth module.
+ * Assembles and manages UserRepository, AuthService, and AuthController instances.
+ */
+
 import { AuthController } from "../controller/authController.js";
 import { AuthService } from "../service/authService.js";
 import MongoUserRepository from "../repository/UserRepository.js"
 
 /**
  * Dependency Injection Container for the Auth module.
- * This container initializes and manages the dependencies for the Auth module,
- * including repositories, services, and controllers.
  */
 class Container {
+    /**
+     * Bootstraps the module instances.
+     * Hooks MongoUserRepository, AuthService, and AuthController.
+     */
     static init() {
         // Initialize repositories
         const repositories = {

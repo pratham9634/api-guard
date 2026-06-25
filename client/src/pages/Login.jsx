@@ -1,9 +1,20 @@
+/**
+ * @file Login.jsx
+ * @description Login page component for user authentication.
+ * Captures user credentials, submits via AuthContext login callback, and routes to landing/dashboard.
+ */
+
 import { useState } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Shield, AlertCircle } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 
+/**
+ * Login page view component.
+ * 
+ * @returns {React.ReactElement}
+ */
 export default function Login() {
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -11,14 +22,24 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Skip showing login form while resolving credentials
   if (authLoading) return null;
+  // If already authenticated, redirect immediately back to the app dashboard
   if (isAuthenticated) return <Navigate to="/app/dashboard" replace />;
 
+  /**
+   * Updates state on text input change and resets any validation alerts.
+   * @param {React.ChangeEvent<HTMLInputElement>} e
+   */
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     setError('');
   };
 
+  /**
+   * Submits credentials for validation.
+   * @param {React.FormEvent} e
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.username.trim() || !form.password.trim()) {

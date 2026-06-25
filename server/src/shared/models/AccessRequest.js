@@ -1,5 +1,14 @@
+/**
+ * @file AccessRequest.js
+ * @description Mongoose schema definition for onboarding access requests.
+ * Records submission details (name, email, company, useCase) for external signups before client admin provision.
+ */
+
 import mongoose from "mongoose";
 
+/**
+ * AccessRequest Mongoose Schema definition.
+ */
 const accessRequestSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -12,6 +21,7 @@ const accessRequestSchema = new mongoose.Schema({
         unique: true,
         trim: true,
         lowercase: true,
+        // Enforces basic email validity regex patterns
         match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, "Please enter a valid email address"]
     },
     companyName: {
@@ -33,6 +43,7 @@ const accessRequestSchema = new mongoose.Schema({
         default: ""
     }
 }, {
+    // Automatically creates 'createdAt' and 'updatedAt' database properties
     timestamps: true
 });
 
