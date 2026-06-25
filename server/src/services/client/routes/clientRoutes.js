@@ -1,3 +1,9 @@
+/**
+ * @file clientRoutes.js
+ * @description Registers client and API Key management endpoints.
+ * Integrates tenant lookup permissions and superAdmin administration overrides.
+ */
+
 import express from "express";
 import clientDependencies from "../Dependencies/dependencies.js"
 import authenticate from "../../../shared/middlewares/authenticate.js"

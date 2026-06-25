@@ -1,9 +1,20 @@
+/**
+ * @file authController.js
+ * @description Controller for authentication routes.
+ * Receives request payloads, invokes service handlers, sets auth cookies, and clears cookies on logout.
+ */
+
 import config from "../../../shared/config/index.js";
 import { APPLICATION_ROLES } from "../../../shared/constants/roles.js";
 import ResponseFormatter from "../../../shared/utils/responseFormatter.js"
 
-
+/**
+ * Controller class coordinating authentication actions.
+ */
 export class AuthController {
+    /**
+     * @param {AuthService} authService - Service layer class.
+     */
     constructor(authService){
         if (!authService) {
             throw new Error("AuthService is Required");
@@ -11,6 +22,12 @@ export class AuthController {
         this.authService = authService;
     }
 
+    /**
+     * Creates the initial system Super Admin and registers session cookie.
+     * @param {import('express').Request} req - Express request.
+     * @param {import('express').Response} res - Express response.
+     * @param {import('express').NextFunction} next - Express next middleware.
+     */
     async onboardSuperAdmin(req,res,next){
         try {
             const {username ,email,password} = req.body;
@@ -22,6 +39,7 @@ export class AuthController {
             }
             const {user,token} = await this.authService.onboardSuperAdmin(superAdminData);
 
+            // Bind authentication JWT onto request cookie context
              res.cookie("authToken", token, {
                 httpOnly: config.cookie.httpOnly,
                 secure: config.cookie.secure,
@@ -35,6 +53,12 @@ export class AuthController {
         }
     }
 
+    /**
+     * Creates new user accounts.
+     * @param {import('express').Request} req - Express request.
+     * @param {import('express').Response} res - Express response.
+     * @param {import('express').NextFunction} next - Express next middleware.
+     */
     async register(req, res, next) {
         try {
             const { username, email, password, role } = req.body;
@@ -56,6 +80,12 @@ export class AuthController {
         }
     };
 
+    /**
+     * Authenticates existing user credentials and returns session cookie.
+     * @param {import('express').Request} req - Express request.
+     * @param {import('express').Response} res - Express response.
+     * @param {import('express').NextFunction} next - Express next middleware.
+     */
     async login(req, res, next) {
         try {
             const { username, password } = req.body;
@@ -73,6 +103,12 @@ export class AuthController {
         }
     };
 
+    /**
+     * Resolves the profile of the currently logged-in user.
+     * @param {import('express').Request} req - Express request.
+     * @param {import('express').Response} res - Express response.
+     * @param {import('express').NextFunction} next - Express next middleware.
+     */
     async getProfile(req, res, next) {
         try {
             const userId = req.user.userId;
@@ -84,6 +120,12 @@ export class AuthController {
         }
     }
 
+    /**
+     * Clears authentication session cookie.
+     * @param {import('express').Request} req - Express request.
+     * @param {import('express').Response} res - Express response.
+     * @param {import('express').NextFunction} next - Express next middleware.
+     */
      async logout(req, res, next) {
         try {
             res.clearCookie("authToken")
@@ -93,8 +135,11 @@ export class AuthController {
         }
     }
 
-        /**
-     * Update logged-in user's own profile
+    /**
+     * Updates logged-in user profile attributes.
+     * @param {import('express').Request} req - Express request.
+     * @param {import('express').Response} res - Express response.
+     * @param {import('express').NextFunction} next - Express next middleware.
      */
     async updateProfile(req, res, next) {
         try {

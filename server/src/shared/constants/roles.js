@@ -1,3 +1,11 @@
+/**
+ * @file roles.js
+ * @description Defines security roles and role-validation utilities.
+ * - super_admin: Global system administrator with cross-tenant privileges.
+ * - client_admin: Organization admin that can manage keys, users, and read organization-scoped analytics.
+ * - client_viewer: Organization viewer that can read analytics but cannot modify configurations.
+ */
+
 export const ROLES = [
     'super_admin',
     'client_admin',

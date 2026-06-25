@@ -1,3 +1,9 @@
+/**
+ * @file dependencies.js
+ * @description Dependency Injection (DI) container initialization for the Analytics module.
+ * Assembles necessary repositories, services, and controllers cleanly.
+ */
+
 import clientRepository from '../../client/repository/ClientRepository.js';
 import processorContainer from '../../processor/Dependencies/dependencies.js';
 import authContainer from '../../auth/Dependencies/dependencies.js';
@@ -10,6 +16,10 @@ import { AnalyticsController } from '../controller/analyticsController.js';
  * Provides consistent access to repositories, services, and controllers.
  */
 class Container {
+    /**
+     * Bootstraps the module instances.
+     * Hooks clientRepository, metricsRepository from Processor module, and authService from Auth module.
+     */
     static init() {
         const repositories = {
             clientRepository,

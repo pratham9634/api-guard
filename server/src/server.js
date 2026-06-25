@@ -1,3 +1,10 @@
+/**
+ * @file server.js
+ * @description Main entry point for the API Guard Server. Initializes express, sets up
+ * global middlewares, connects to all storage/messaging databases (MongoDB, PostgreSQL, RabbitMQ),
+ * registers API routers, and handles graceful shutdown and process-level errors.
+ */
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -16,13 +23,19 @@ import clientRouter from './services/client/routes/clientRoutes.js';
 import ingestRouter from './services/ingest/routes/ingestRoutes.js';
 import analyticsRouter from "./services/analytics/routes/analyticsRoutes.js"
 import publicRouter from './services/public/routes/publicRoutes.js';
+
 /**
- * Initialize Express app
+ * Initialize Express app instance
  */
 const app = express();
 
 /**
- * Middlewares
+ * Global HTTP Middlewares:
+ * - helmet: Secures express app by setting various HTTP headers.
+ * - cors: Enables cross-origin resource sharing, configured for frontend URL and credentials.
+ * - cookieParser: Parses Cookie header and populates req.cookies.
+ * - express.json: Parses incoming requests with JSON payloads.
+ * - express.urlencoded: Parses incoming requests with urlencoded payloads.
  */
 app.use(helmet());
 app.use(cors({
@@ -47,6 +60,7 @@ app.use((req, res, next) => {
 
 /**
  * Health check endpoint
+ * Used by monitoring tools/orchestrators to ensure server instance is responsive.
  */
 app.get('/health', (req, res) => {
     res.status(200).json(
@@ -84,7 +98,12 @@ app.get("/", (req, res) => {
 });
 
 /**
- * API Routes
+ * Register API Routes:
+ * - /api/auth: Handles user authentication (signup, login, logout, etc.)
+ * - /api/hit: Handles request data ingestion
+ * - /api/public: Public endpoints exposed to external consumers
+ * - /api/analytics: Analytical dashboards and aggregations
+ * - /api: Client and API Key management routes
  */
 app.use("/api/auth", authRouter)
 app.use("/api/hit", ingestRouter)
@@ -94,15 +113,21 @@ app.use("/api", clientRouter)
 
 /**
  * 404 Handler
+ * Catches all requests to unregistered endpoints.
  */
 app.use((req, res) => {
     res.status(404).json(ResponseFormatter.error("Endpoint not found", 404))
 })
 
+// Global Centralized Error Handling Middleware
 app.use(errorHandler)
 
 /**
- * Initialize database connections and start the server
+ * Initializes connections to all required data stores and message queues:
+ * 1. MongoDB (for general document storage / access logs)
+ * 2. PostgreSQL (for structured client, key, and user data)
+ * 3. RabbitMQ (for message ingestion queues)
+ * @throws {Error} If any connection fails.
  */
 async function initializeConnection() {
     try {
@@ -124,7 +149,10 @@ async function initializeConnection() {
     }
 }
 
-
+/**
+ * Starts the express server listener after verifying connections.
+ * Binds graceful shutdown handlers to standard termination signals.
+ */
 async function startServer() {
     try {
         await initializeConnection();
@@ -135,7 +163,10 @@ async function startServer() {
             logger.info(`API available at: http://localhost:${config.port}`);
         });
 
-
+        /**
+         * Closes open connections and exits the process gracefully.
+         * @param {string} signal - The signal that triggered the shutdown.
+         */
         const gracefulShutdown = async (signal) => {
             logger.info(`${signal} received, shutting down gracefully...`);
 
@@ -154,6 +185,7 @@ async function startServer() {
                 }
             })
 
+            // Force termination after 10s timeout if connections hang
             setTimeout(() => {
                 logger.error("Forced shutdown")
                 process.exit(1);
@@ -161,6 +193,7 @@ async function startServer() {
 
         }
 
+        // Process event listeners for termination and unhandled failures
         process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
         process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 

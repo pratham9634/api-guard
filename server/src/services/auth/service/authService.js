@@ -1,3 +1,10 @@
+/**
+ * @file authService.js
+ * @description Authentication service business logic.
+ * Manages user logins, profile registrations, credentials password comparison, JWT generation,
+ * organization-level permission configurations, and user activation states.
+ */
+
 import config from "../../../shared/config/index.js";
 import AppError from "../../../shared/utils/AppError.js";
 import jwt from "jsonwebtoken";
@@ -5,7 +12,13 @@ import logger from "../../../shared/config/logger.js"
 import bcrypt from "bcryptjs";
 import { APPLICATION_ROLES ,isValidRole } from "../../../shared/constants/roles.js";
 
+/**
+ * Service class performing user registration, logins, profile edits, and role adjustments.
+ */
 export class AuthService {
+    /**
+     * @param {Object} userRepository - Database accessor repository.
+     */
     constructor(userRepository){
         if (!userRepository) {
             throw new Error("UserRepository is Required");
@@ -13,6 +26,11 @@ export class AuthService {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Encrypts user identity payload into a secure JSON Web Token (JWT).
+     * @param {User} user - User model object.
+     * @returns {string} Signed JWT.
+     */
      generateToken(user) {
         const { _id, email, username, role, clientId } = user;
 
@@ -29,18 +47,35 @@ export class AuthService {
         })
     }
 
+    /**
+     * Strips critical properties (e.g., password hash) from User payload objects before sending to clients.
+     * @param {User} user - User entity.
+     * @returns {Object} JSON user details.
+     */
     formatUserForResponse(user) {
         const userObj = user.toObject ? user.toObject() : { ...user };
         delete userObj.password;
         return userObj;
     };
 
+    /**
+     * Compares entered password with bcrypt hash string.
+     * @param {string} userEnteredPassword - Plain credentials password.
+     * @param {string} hashedPassword - Hashed candidate.
+     * @returns {Promise<boolean>} Match status.
+     */
     async comparePassword(userEnteredPassword, hashedPassword) {
         return await bcrypt.compare(userEnteredPassword, hashedPassword)
     }
 
+    /**
+     * Provisions the initial system Super Admin. Disabled if any users already exist.
+     * @param {Object} superAdminData - Registration details.
+     * @returns {Promise<{user: Object, token: string}>} Formatted user object and active JWT.
+     */
     async onboardSuperAdmin(superAdminData){
         try {
+            // Lock onboarding if system is already set up with an active user account
             const existingUser = await this.userRepository.findAll();
             if(existingUser.length>0){
                 throw new AppError("Super Admin Onboarding is disabled",403)
@@ -63,6 +98,11 @@ export class AuthService {
         }
     }
 
+    /**
+     * Registers a new organization user. Enforces email/username uniqueness checks.
+     * @param {Object} userData - Registration payload details.
+     * @returns {Promise<{user: Object, token: string}>}
+     */
     async register(userData) {
         try {
             const existingUser = await this.userRepository.findByUsername(userData.username)
@@ -92,21 +132,28 @@ export class AuthService {
         }
     };
 
+    /**
+     * Validates user credentials. Generates authentication token.
+     * @param {string} username - Account login username.
+     * @param {string} password - Account login credentials.
+     * @returns {Promise<{user: Object, token: string}>}
+     */
     async login(username, password) {
         try {
             const user = await this.userRepository.findByUsername(username);
 
             if (!user) {
-                throw new AppError("Invliad Credentials", 401);
+                throw new AppError("Invalid Credentials", 401);
             };
 
+            // Deny login if user status is suspended/deactivated
             if (!user.isActive) {
                 throw new AppError("Account is deactivated", 403);
             }
 
             const isPasswordValid = await this.comparePassword(password, user.password);
             if (!isPasswordValid) {
-                throw new AppError("Invliad Credentials", 401);
+                throw new AppError("Invalid Credentials", 401);
             }
             const token = this.generateToken(user);
 
@@ -123,6 +170,11 @@ export class AuthService {
         }
     };
 
+    /**
+     * Retrieves user profile details.
+     * @param {string} userId - User identifier.
+     * @returns {Promise<Object>} Formatted user.
+     */
      async getProfile(userId) {
         try {
             const user = await this.userRepository.findById(userId);
@@ -135,6 +187,12 @@ export class AuthService {
             throw error;
         }
     };
+
+    /**
+     * Checks if a user possesses global platform admin status.
+     * @param {string} userId - User identifier.
+     * @returns {Promise<boolean>}
+     */
     async checkSuperAdminPermissions(userId) {
         try {
             const user = await this.userRepository.findById(userId);
@@ -149,7 +207,7 @@ export class AuthService {
         }
     };
 
-        /**
+    /**
      * Update logged in user's profile details
      * @param {String} userId - The user ID to update
      * @param {Object} updateData - Fields to update (username, email, password)
@@ -192,6 +250,8 @@ export class AuthService {
 
     /**
      * List all system users (super_admin only)
+     * @param {Object} adminUser - Executing user details.
+     * @returns {Promise<Array>}
      */
     async getAllUsers(adminUser) {
         try {
@@ -209,6 +269,10 @@ export class AuthService {
 
     /**
      * Activate or deactivate a user status
+     * @param {string} userId - User to toggle.
+     * @param {boolean} isActive - Target state.
+     * @param {Object} adminUser - Requesting administrator.
+     * @returns {Promise<Object>} Updated profile details.
      */
     async updateUserStatus(userId, isActive, adminUser) {
         try {
@@ -232,6 +296,10 @@ export class AuthService {
 
     /**
      * Update user role and dynamically adjust permissions
+     * @param {string} userId - Target user identifier.
+     * @param {string} role - Target role value.
+     * @param {Object} adminUser - Requesting administrator.
+     * @returns {Promise<Object>} Updated user.
      */
     async updateUserRole(userId, role, adminUser) {
         try {

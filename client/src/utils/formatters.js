@@ -1,5 +1,15 @@
 /**
- * Format a number with locale-aware abbreviations
+ * @file formatters.js
+ * @description UI formatting utilities for data display.
+ * Includes helpers for values representation, latency tags, date objects, token masking, and initials.
+ */
+
+/**
+ * Format a number with locale-aware abbreviations.
+ * Supports thousand (k) and million (M) formatting suffixes.
+ * 
+ * @param {number|null|undefined} n - The raw value.
+ * @returns {string} Abbreviated locale string.
  */
 export function formatNumber(n) {
   if (n === null || n === undefined) return '—';
@@ -9,7 +19,10 @@ export function formatNumber(n) {
 }
 
 /**
- * Format latency in ms or s
+ * Format latency in ms or s depending on magnitude.
+ * 
+ * @param {number|string|null|undefined} ms - The millisecond count.
+ * @returns {string} Formatted latency text.
  */
 export function formatLatency(ms) {
   if (ms === null || ms === undefined) return '—';
@@ -19,7 +32,10 @@ export function formatLatency(ms) {
 }
 
 /**
- * Format a percentage
+ * Format a decimal percentage as text with a percentage suffix.
+ * 
+ * @param {number|string|null|undefined} n - Ratio number.
+ * @returns {string} Percentage text.
  */
 export function formatPercentage(n) {
   if (n === null || n === undefined) return '—';
@@ -27,7 +43,10 @@ export function formatPercentage(n) {
 }
 
 /**
- * Format a date as relative time or absolute
+ * Format a date as relative time (e.g. "Just now", "2m ago") or fall back to an absolute date string.
+ * 
+ * @param {Date|string|number|null|undefined} date - Date object/timestamp.
+ * @returns {string} Relative time representation.
  */
 export function formatDate(date) {
   if (!date) return '—';
@@ -52,7 +71,10 @@ export function formatDate(date) {
 }
 
 /**
- * Format a date to full datetime string
+ * Format a date to a full readable datetime string.
+ * 
+ * @param {Date|string|number|null|undefined} date - Target date.
+ * @returns {string} Full local datetime text.
  */
 export function formatDateTime(date) {
   if (!date) return '—';
@@ -66,7 +88,10 @@ export function formatDateTime(date) {
 }
 
 /**
- * Format a time bucket for chart axis
+ * Format a time bucket timestamp to localized hour:minute string for chart axis.
+ * 
+ * @param {Date|string|number|null|undefined} bucket - Bucket timestamp.
+ * @returns {string} Formatted time text.
  */
 export function formatTimeBucket(bucket) {
   if (!bucket) return '';
@@ -75,7 +100,10 @@ export function formatTimeBucket(bucket) {
 }
 
 /**
- * Mask an API key showing only first 8 and last 4 chars
+ * Mask an API key showing only first 8 and last 4 characters.
+ * 
+ * @param {string|null|undefined} key - Raw API key token.
+ * @returns {string} Masked token.
  */
 export function maskApiKey(key) {
   if (!key || key.length < 12) return key || '—';
@@ -83,7 +111,10 @@ export function maskApiKey(key) {
 }
 
 /**
- * Get user initials from username
+ * Get user initials from a username.
+ * 
+ * @param {string|null|undefined} name - Username/email/name.
+ * @returns {string} Initials text (max 2 characters).
  */
 export function getInitials(name) {
   if (!name) return '?';

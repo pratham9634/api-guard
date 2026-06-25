@@ -1,14 +1,36 @@
+/**
+ * @file analyticService.js
+ * @description Processes analytics queries.
+ * Interacts with PostgreSQL metrics tables and performs multi-stage MongoDB aggregations
+ * to profile client API transactions, error rates, latencies, and browser contexts.
+ */
+
 import mongoose from 'mongoose';
 import logger from '../../../shared/config/logger.js';
 import AppError from '../../../shared/utils/AppError.js';
 
+/**
+ * Service class performing query aggregations and analytics data mappings.
+ */
 export class AnalyticsService {
+    /**
+     * @param {Object} metricsRepo - PostgreSQL repository for hourly metrics.
+     * @param {Object} apiHitRepo - MongoDB repository for raw hit collections.
+     */
     constructor(metricsRepo, apiHitRepo) {
         if (!metricsRepo) throw new Error("AnalyticsService requires a metricsRepository");
         this.metricsRepository = metricsRepo;
         this.apiHitRepository = apiHitRepo;
     }
 
+    /**
+     * Formulates overall performance metrics (total hits, error occurrences, average latencies) over a window.
+     * @param {string} clientId - Client account UUID.
+     * @param {Object} [filters={}] - Optional window variables.
+     * @param {string|Date} [filters.startTime] - Start date.
+     * @param {string|Date} [filters.endTime] - End date.
+     * @returns {Promise<Object>} Statistics structure.
+     */
     async getOverallStats(clientId, filters = {}) {
         try {
             const { startTime, endTime } = this.parseTimeFilters(filters);
@@ -42,6 +64,12 @@ export class AnalyticsService {
         }
     }
 
+    /**
+     * Resolves filters to standard javascript Date structures.
+     * Defaults to the last 24 hours if start limits are omitted.
+     * @param {Object} [filters={}] - Filter payload.
+     * @returns {{startTime: Date, endTime: Date}} Parsed limits.
+     */
     parseTimeFilters(filters = {}) {
         let { startTime, endTime } = filters;
 
@@ -65,6 +93,14 @@ export class AnalyticsService {
 
     }
 
+    /**
+     * Queries top endpoint routes with the highest volume of request traffic.
+     * @param {string} clientId - Organization scope.
+     * @param {Object} [options={}] - Query options.
+     * @param {number} [options.limit=10] - Result size.
+     * @param {string|Date} [options.startTime] - Starting limit.
+     * @returns {Promise<Array>} Array of endpoints with stats.
+     */
     async getTopEndpoints(clientId, options = {}) {
         try {
             const { limit = 10, startTime } = options;
@@ -89,6 +125,12 @@ export class AnalyticsService {
         }
     }
 
+    /**
+     * Pulls chronological time-series buckets from PostgreSQL metrics database.
+     * @param {string} clientId - Organization scope.
+     * @param {Object} [filters={}] - Query constraints.
+     * @returns {Promise<Array>} Array of timeline metrics.
+     */
     async getTimeSeries(clientId, filters = {}) {
         try {
             const { serviceName, endpoint, startTime, endTime, limit = 100 } = filters;
@@ -114,11 +156,22 @@ export class AnalyticsService {
         }
     }
 
+    /**
+     * Executes advanced aggregation reports from raw hit logs stored in MongoDB.
+     * Combines multiple database aggregations:
+     * 1. Distribution of HTTP status codes (2xx, 3xx, 4xx, 5xx series).
+     * 2. Key usage mapping (uses lookup to join MongoDB's api_keys config).
+     * 3. Consumer profiles (aggregates by origin IP and user-agent string).
+     * 4. Latency analysis over time, calculating p50 (median), p95, and p99.
+     * @param {string} clientId - Scope selector.
+     * @param {Object} [filters={}] - Time boundaries.
+     * @returns {Promise<Object>} Formatted report object.
+     */
     async getAdvancedReports(clientId, filters = {}) {
         try {
             const { startTime, endTime } = this.parseTimeFilters(filters);
             
-            // Check if there is a client filter. For super_admin, clientId might be null/undefined to get overall stats.
+            // Build filter scope
             const queryMatch = {};
             if (clientId) {
                 queryMatch.clientId = new mongoose.Types.ObjectId(clientId);
@@ -151,7 +204,7 @@ export class AnalyticsService {
                 statusDistribution.details.push({ statusCode: code, count });
             });
 
-            // 2. API Key Performance aggregation
+            // 2. API Key Performance aggregation (incorporating config JOIN)
             const apiKeyPerformance = await this.apiHitRepository.model.aggregate([
                 { $match: queryMatch },
                 { $group: {
@@ -199,7 +252,7 @@ export class AnalyticsService {
             const durationMs = endTime - startTime;
             let bucketFormat = "%Y-%m-%dT%H:00:00.000Z";
             if (durationMs > 2 * 24 * 60 * 60 * 1000) {
-                bucketFormat = "%Y-%m-%d";
+                bucketFormat = "%Y-%m-%d"; // Bucket by day if range exceeds 2 days
             }
 
             const timeSeriesResult = await this.apiHitRepository.model.aggregate([
@@ -218,6 +271,7 @@ export class AnalyticsService {
                 { $sort: { _id: 1 } }
             ]);
 
+            // Sort arrays inline to calculate accurate percentiles
             const latencyPercentilesTimeSeries = timeSeriesResult.map(bucket => {
                 const sorted = bucket.latencies.sort((a, b) => a - b);
                 const getP = (p) => {

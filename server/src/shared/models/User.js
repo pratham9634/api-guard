@@ -1,8 +1,17 @@
+/**
+ * @file User.js
+ * @description Mongoose schema definition for platform Users.
+ * Tracks usernames, email addresses, hashed passwords (validated via SecurityUtils before save), roles, and client relationships.
+ */
+
 import mongoose from "mongoose";
 import SecurityUtils from "../utils/SecurityUtils.js";
 import bcrypt from "bcryptjs";
 import { ROLES } from "../constants/roles.js";
 
+/**
+ * User Mongoose Schema.
+ */
 const userSchema = new mongoose.Schema({
     username : {
         type : String,
@@ -12,6 +21,7 @@ const userSchema = new mongoose.Schema({
         minlength : 3,
         maxlength : 30,
         validate : {
+            // Usernames can only consist of alphanumeric characters and underscores
             validator : function(v){
                 return /^[a-zA-Z0-9_]+$/.test(v);
             },
@@ -25,6 +35,7 @@ const userSchema = new mongoose.Schema({
         trim : true,
         lowercase : true,
         validate : {
+            // Regex validation for general email strings
             validator : function(v){
                 return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
             },
@@ -38,6 +49,7 @@ const userSchema = new mongoose.Schema({
         minlength : 6,
         maxlength : 100,
         validate : {
+            // Checks password complexity criteria only if the password field is modified and not already hashed (starting with $2b$)
             validator : function(v){
                 if(this.isModified('password')&& v && !v.startsWith('$2b$')){
                     const validationResult = SecurityUtils.validatePassword(v);
@@ -62,6 +74,7 @@ const userSchema = new mongoose.Schema({
     clientId :{
         type : mongoose.Schema.Types.ObjectId,
         ref : "Client",
+        // Client ID is required for client organization roles but excluded for platform super admins
         required : function(){
             return this.role !== "super_admin"
         }
@@ -93,6 +106,9 @@ const userSchema = new mongoose.Schema({
     collection : "users",
 });
 
+/**
+ * Pre-save Mongoose hook. Automatically hashes user password using bcrypt prior to write operations.
+ */
 userSchema.pre('save', async function () {
     if (!this.isModified('password')) {
         return;

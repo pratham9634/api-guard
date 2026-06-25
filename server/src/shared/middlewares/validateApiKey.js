@@ -1,10 +1,21 @@
+/**
+ * @file validateApiKey.js
+ * @description Ingestion API Key validation middleware.
+ * Verifies external incoming HTTP requests by checking the `x-api-key` header against the PostgreSQL store.
+ * Validates client activation status and authorization capability flags.
+ */
+
 import ResponseFormatter from '../utils/responseFormatter.js';
 import logger from '../config/logger.js';
 import clientContainer from '../../services/client/Dependencies/dependencies.js';
 
 /**
- * Middleware to validate API keys against database
- * Used for external services posting events
+ * Express middleware to validate external API keys.
+ * Extracts key from `x-api-key` header, ensures client is active and possesses ingest authorization,
+ * then embeds client/key structures onto the Express request object (`req.client`, `req.apiKey`).
+ * @param {import('express').Request} req - Express request object.
+ * @param {import('express').Response} res - Express response object.
+ * @param {import('express').NextFunction} next - Express next middleware function.
  */
 const validateApiKey = async (req, res, next) => {
     try {
@@ -20,14 +31,14 @@ const validateApiKey = async (req, res, next) => {
                 .json(ResponseFormatter.error('API key is required', 401));
         }
 
-        // Get client and API key from database
+        // Fetch client and API key record from database dependencies container
         const result = await clientContainer.services.clientServices.getClientByApiKey(apiKey);
 
         if (!result) {
             logger.warn('Invalid API key attempted', {
                 path: req.path,
                 ip: req.ip,
-                apiKey: apiKey.substring(0, 8) + '...', // Log partial key for security
+                apiKey: apiKey.substring(0, 8) + '...', // Log partial key for security to prevent credentials leakage
             });
             return res
                 .status(403)
@@ -36,7 +47,7 @@ const validateApiKey = async (req, res, next) => {
 
         const { client, apiKey: apiKeyObj } = result;
 
-        // Check if client is active
+        // Check if client account status is currently active
         if (!client.isActive) {
             logger.warn('Inactive client attempted API access', {
                 path: req.path,
@@ -50,7 +61,7 @@ const validateApiKey = async (req, res, next) => {
 
         // Usage limits removed — no monthly usage checks
 
-        // Check API key permissions
+        // Check API key permission permissions for ingestion authority
         if (!apiKeyObj.permissions?.canIngest) {
             logger.warn('API key without ingest permission attempted access', {
                 path: req.path,
@@ -64,7 +75,7 @@ const validateApiKey = async (req, res, next) => {
 
         // No API key usage tracking required
 
-        // Add client and API key info to request
+        // Bind validated client and API key entities to Request context
         req.client = client;
         req.apiKey = apiKeyObj;
 
