@@ -5,7 +5,7 @@
  * user status management, and cascade deletions.
  */
 
-import ResponseFormatter from "../../../shared/utils/responseFormatter.js"
+import ResponseFormatter from "../../../shared/utils/ResponseFormatter.js"
 
 /**
  * ClientController class to handle client related requests.

@@ -4,7 +4,7 @@
  * Validates request payload against a rules object (supporting required, minLength, and custom logic validations).
  */
 
-import ResponseFormatter from "../utils/responseFormatter.js"
+import ResponseFormatter from "../utils/ResponseFormatter.js"
 
 /**
  * Higher-order middleware function to validate the request body against a specified rules schema.

@@ -6,7 +6,7 @@
  */
 
 import logger from "../../../shared/config/logger.js";
-import ResponseFormatter from "../../../shared/utils/responseFormatter.js";
+import ResponseFormatter from "../../../shared/utils/ResponseFormatter.js";
 
 /**
  * Controller class that routes HTTP payloads into the API hit ingestion service.

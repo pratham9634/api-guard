@@ -5,7 +5,7 @@
  */
 
 import config from "../config/index.js";
-import ResponseFormatter from "../utils/responseFormatter.js";
+import ResponseFormatter from "../utils/ResponseFormatter.js";
 import jwt from "jsonwebtoken";
 import logger from "../config/logger.js"
 

@@ -5,7 +5,7 @@
  */
 
 import publicService from "../service/publicService.js";
-import ResponseFormatter from "../../../shared/utils/responseFormatter.js";
+import ResponseFormatter from "../../../shared/utils/ResponseFormatter.js";
 import logger from "../../../shared/config/logger.js";
 
 /**

@@ -6,7 +6,7 @@
  */
 
 import logger from "../config/logger.js";
-import ResponseFormatter from "../utils/responseFormatter.js";
+import ResponseFormatter from "../utils/ResponseFormatter.js";
 
 /**
  * Global error handler middleware for Express.

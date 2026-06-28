@@ -4,7 +4,7 @@
  * Restricts access to endpoints based on user roles configured in req.user.
  */
 
-import ResponseFormatter from "../utils/responseFormatter.js";
+import ResponseFormatter from "../utils/ResponseFormatter.js";
 
 /**
  * Higher-order middleware function to restrict route access to specific roles.

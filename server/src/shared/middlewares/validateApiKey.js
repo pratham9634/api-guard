@@ -5,7 +5,7 @@
  * Validates client activation status and authorization capability flags.
  */
 
-import ResponseFormatter from '../utils/responseFormatter.js';
+import ResponseFormatter from '../utils/ResponseFormatter.js';
 import logger from '../config/logger.js';
 import clientContainer from '../../services/client/Dependencies/dependencies.js';
 
