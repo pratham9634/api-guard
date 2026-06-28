@@ -97,7 +97,7 @@ The easiest way to spin up the entire system (including PostgreSQL, MongoDB, Rab
 1. Clone the repository and navigate to the project directory.
 2. In the `server` directory, create a `.env` file (or let Docker compose inject defaults, but setting your JWT secret is recommended):
    ```env
-   JWT_SECRET=PRATHAM_SECRET
+   JWT_SECRET=YOUR_SECRET
    ```
 3. Run the following command in the `server` directory:
    ```bash
