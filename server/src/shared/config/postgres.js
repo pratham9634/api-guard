@@ -35,6 +35,10 @@ class PostgresConnection{
                 user: config.postgres.user,
                 password: config.postgres.password,
                 database: config.postgres.database,
+                ssl: 
+                    process.env.NODE_ENV === "production"
+                        ? { rejectUnauthorized: false }
+                        : false,
                 max: 20, // Keep maximum of 20 concurrent connections in the pool
                 idleTimeoutMillis: 30000, // Close idle connections after 30 seconds
                 connectionTimeoutMillis: 2000, // Timeout connection attempts after 2 seconds
