@@ -71,7 +71,8 @@ export class AuthController {
             res.cookie("authToken", token, {
                 httpOnly: config.cookie.httpOnly,
                 secure: config.cookie.secure,
-                maxAge: config.cookie.expiresIn
+                sameSite: config.cookie.sameSite,
+                maxAge: config.cookie.maxAge
             });
 
             res.status(201).json(ResponseFormatter.success(user, "User created successfully", 201))
@@ -94,7 +95,8 @@ export class AuthController {
             res.cookie("authToken", token, {
                 httpOnly: config.cookie.httpOnly,
                 secure: config.cookie.secure,
-                maxAge: config.cookie.expiresIn
+                sameSite: config.cookie.sameSite,
+                maxAge: config.cookie.maxAge
             });
 
             res.status(200).json(ResponseFormatter.success(user, "User LoggedIn successfully", 200))
