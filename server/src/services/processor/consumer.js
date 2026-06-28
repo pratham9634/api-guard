@@ -7,6 +7,8 @@
  */
 
 import { z } from 'zod';
+import { fileURLToPath } from 'url';
+import path from 'path';
 import rabbitmq from '../../shared/config/rabbitmq.js';
 import mongodb from '../../shared/config/mongodb.js';
 import postgres from '../../shared/config/postgres.js';
@@ -447,59 +449,55 @@ const consumer = new EventConsumer({
 });
 
 /**
- * Loops startup consumer connection attempts to withstand temporary Docker/service startup lag.
- * Exits the process if startup retries fail.
- * 
- * @returns {Promise<void>}
+ * Starts the consumer in a non-blocking background loop.
+ * Retries starting the consumer every 5 seconds if connection fails,
+ * logging errors but never exiting the process.
  */
-async function startConsumerWithRetry() {
-    const startupRetry = new RetryStrategy({ maxRetries: 5, baseDelayMs: 5000, maxDelayMs: 30_000 });
-    let attempt = 0;
-
-    while (startupRetry.shouldRetry(attempt) || attempt === 0) {
-        try {
-            logger.info(`Starting consumer (attempt ${attempt + 1})`);
-            await consumer.start();
-            logger.info('Consumer started successfully');
-            return;
-        } catch (error) {
-            attempt++;
-            logger.error(`Consumer start attempt ${attempt} failed:`, error);
-
-            if (!startupRetry.shouldRetry(attempt)) {
-                logger.error('Max retries reached, exiting...');
-                process.exit(1);
+export default function startConsumer() {
+    (async () => {
+        let attempt = 0;
+        while (true) {
+            try {
+                logger.info(`Starting RabbitMQ consumer (attempt ${attempt + 1})...`);
+                await consumer.start();
+                logger.info('RabbitMQ consumer started successfully');
+                break;
+            } catch (error) {
+                attempt++;
+                logger.error(`RabbitMQ consumer start attempt ${attempt} failed: ${error.message || error}. Retrying in 5 seconds...`);
+                await new Promise(resolve => setTimeout(resolve, 5000));
             }
-
-            await startupRetry.wait(attempt - 1);
         }
-    }
+    })();
 }
 
-// Register gracefull termination signal listeners
-process.on('SIGINT', async () => {
-    logger.info('Received SIGINT, shutting down gracefully...');
-    await consumer.stop();
-    process.exit(0);
-});
+// Check if run directly (e.g. node consumer.js) to preserve standalone script execution capability
+const nodePath = fileURLToPath(import.meta.url);
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(nodePath);
 
-process.on('SIGTERM', async () => {
-    logger.info('Received SIGTERM, shutting down gracefully...');
-    await consumer.stop();
-    process.exit(0);
-});
+if (isMain) {
+    // Register graceful termination signal listeners when run directly
+    process.on('SIGINT', async () => {
+        logger.info('Received SIGINT, shutting down gracefully...');
+        await consumer.stop();
+        process.exit(0);
+    });
 
-process.on('uncaughtException', (error) => {
-    logger.error('Uncaught exception:', error);
-    process.exit(1);
-});
+    process.on('SIGTERM', async () => {
+        logger.info('Received SIGTERM, shutting down gracefully...');
+        await consumer.stop();
+        process.exit(0);
+    });
 
-process.on('unhandledRejection', (reason, promise) => {
-    logger.error('Unhandled promise rejection at:', promise, 'reason:', reason);
-    process.exit(1);
-});
+    process.on('uncaughtException', (error) => {
+        logger.error('Uncaught exception:', error);
+        process.exit(1);
+    });
 
-// Execute the bootstrap process
-startConsumerWithRetry();
+    process.on('unhandledRejection', (reason, promise) => {
+        logger.error('Unhandled promise rejection at:', promise, 'reason:', reason);
+        process.exit(1);
+    });
 
-export default consumer;
+    startConsumer();
+}

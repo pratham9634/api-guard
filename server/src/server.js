@@ -16,6 +16,7 @@ import rabbitmq from './shared/config/rabbitmq.js';
 import errorHandler from './shared/middlewares/errorHandler.js';
 import ResponseFormatter from './shared/utils/ResponseFormatter.js';
 import cookieParser from "cookie-parser"
+import startConsumer from "./services/processor/consumer.js";
 
 // Routers
 import authRouter from "./services/auth/routes/authRouter.js"
@@ -140,7 +141,11 @@ async function initializeConnection() {
         await postgres.testConnection();
 
         // Connect to RabbitMQ;
-        await rabbitmq.connect();
+        try {
+            await rabbitmq.connect();
+        } catch (error) {
+            logger.error("Failed to connect to RabbitMQ during initialization, will retry later:", error);
+        }
 
         logger.info("All connections established successfully");
     } catch (error) {
@@ -161,6 +166,9 @@ async function startServer() {
             logger.info(`Server started on port ${config.port}`);
             logger.info(`Environment: ${config.node_env}`);
             logger.info(`API available at: http://localhost:${config.port}`);
+
+            // Start RabbitMQ consumer in background
+            startConsumer();
         });
 
         /**
