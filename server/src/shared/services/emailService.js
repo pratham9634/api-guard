@@ -12,45 +12,76 @@ class EmailService {
     constructor() {
         /** @type {import('nodemailer').Transporter|null} */
         this.transporter = null;
-        this.init();
+        this.initPromise = this.init();
     }
 
     /**
      * Initializes the Nodemailer SMTP transporter.
-     * Evaluates environment variables for credentials. If host/username/pass are not set,
+     * Evaluates central config for SMTP credentials. If host/username/pass are not set,
      * provisions an ephemeral test inbox via ethereal.email.
      */
     async init() {
         try {
+            const { smtp_host, smtp_port, smtp_user, smtp_pass } = config.email;
+            const isProduction = config.node_env === "production";
+
             // Check if user provided SMTP credentials
-            if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-                this.transporter = nodemailer.createTransport({
-                    host: process.env.SMTP_HOST,
-                    port: process.env.SMTP_PORT || 587,
-                    secure: process.env.SMTP_PORT == 465,
+            if (smtp_host && smtp_user && smtp_pass) {
+                const transporter = nodemailer.createTransport({
+                    host: smtp_host,
+                    port: smtp_port,
+                    secure: smtp_port === 465,
                     auth: {
-                        user: process.env.SMTP_USER,
-                        pass: process.env.SMTP_PASS
+                        user: smtp_user,
+                        pass: smtp_pass
                     }
                 });
-                logger.info('Email service initialized with SMTP credentials');
+
+                // Verify connection configuration
+                try {
+                    await transporter.verify();
+                    this.transporter = transporter;
+                    logger.info('Email service initialized and verified with SMTP credentials');
+                } catch (verifyError) {
+                    logger.error('SMTP connection verification failed:', verifyError);
+                    if (!isProduction) {
+                        logger.warn('Non-production environment: falling back to Ethereal Email.');
+                        await this.setupEthereal();
+                    } else {
+                        logger.error('SMTP verification failed in production. Email service will be unavailable.');
+                    }
+                }
             } else {
-                // Fallback to Ethereal Email (free temporary email for testing)
-                logger.info('No SMTP credentials found, generating Ethereal test account...');
-                const testAccount = await nodemailer.createTestAccount();
-                this.transporter = nodemailer.createTransport({
-                    host: "smtp.ethereal.email",
-                    port: 587,
-                    secure: false,
-                    auth: {
-                        user: testAccount.user,
-                        pass: testAccount.pass
-                    }
-                });
-                logger.info(`Ethereal test account created: ${testAccount.user}`);
+                if (!isProduction) {
+                    logger.info('No SMTP credentials found, generating Ethereal test account...');
+                    await this.setupEthereal();
+                } else {
+                    logger.error('SMTP credentials are required in production but missing. Email service will be unavailable.');
+                }
             }
         } catch (error) {
             logger.error('Failed to initialize email service:', error);
+        }
+    }
+
+    /**
+     * Provisions Ethereal test email account (for development/testing)
+     */
+    async setupEthereal() {
+        try {
+            const testAccount = await nodemailer.createTestAccount();
+            this.transporter = nodemailer.createTransport({
+                host: "smtp.ethereal.email",
+                port: 587,
+                secure: false,
+                auth: {
+                    user: testAccount.user,
+                    pass: testAccount.pass
+                }
+            });
+            logger.info(`Ethereal test account created: ${testAccount.user}`);
+        } catch (error) {
+            logger.error('Failed to setup Ethereal email:', error);
         }
     }
 
@@ -62,14 +93,19 @@ class EmailService {
      * @returns {Promise<import('nodemailer').SentMessageInfo>} Send results.
      */
     async sendEmail(to, subject, html) {
+        if (this.initPromise) {
+            await this.initPromise;
+        }
+
         if (!this.transporter) {
-            logger.warn('Email service not initialized, cannot send email');
-            return;
+            const errorMsg = 'Email service not initialized or SMTP connection failed. Cannot send email.';
+            logger.error(errorMsg);
+            throw new Error(errorMsg);
         }
 
         try {
-            const defaultFrom = process.env.SMTP_USER ? `"API Guard" <${process.env.SMTP_USER}>` : '"API Guard Team" <onboarding@resend.dev>';
-            const fromAddress = process.env.EMAIL_FROM || defaultFrom;
+            const defaultFrom = config.email.smtp_user ? `"API Guard" <${config.email.smtp_user}>` : '"API Guard Team" <onboarding@resend.dev>';
+            const fromAddress = config.email.email_from || defaultFrom;
             const info = await this.transporter.sendMail({
                 from: fromAddress,
                 to,

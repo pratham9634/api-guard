@@ -56,5 +56,13 @@ const config = {
         maxAge: 24 * 60 * 60 * 1000, // Expires in 24 hours
     },
 
+    // Email/SMTP configuration
+    email: {
+        smtp_host: process.env.SMTP_HOST,
+        smtp_port: parseInt(process.env.SMTP_PORT || 587, 10),
+        smtp_user: process.env.SMTP_USER,
+        smtp_pass: process.env.SMTP_PASS,
+        email_from: process.env.EMAIL_FROM,
+    },
 }
 export default config;

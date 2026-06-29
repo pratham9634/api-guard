@@ -555,12 +555,15 @@ export class ClientService {
     }
 
     async approveAccessRequest(requestId, adminUser) {
+        let client = null;
+        let user = null;
+        let request = null;
         try {
             if (adminUser.role !== APPLICATION_ROLES.SUPER_ADMIN) {
                 throw new AppError("Access denied - Super Admin only", 403);
             }
 
-            const request = await AccessRequest.findById(requestId);
+            request = await AccessRequest.findById(requestId);
             if (!request) {
                 throw new AppError("Access request not found", 404);
             }
@@ -583,7 +586,7 @@ export class ClientService {
             }
 
             // 1. Create the Client
-            const client = await this.createClient({
+            client = await this.createClient({
                 name: request.companyName,
                 email: request.email,
                 description: request.useCase,
@@ -599,7 +602,7 @@ export class ClientService {
             }
 
             // 3. Create the Client Admin user
-            const user = await this.createClientUser(client._id, {
+            user = await this.createClientUser(client._id, {
                 username,
                 email: request.email,
                 password: rawPassword,
@@ -618,7 +621,39 @@ export class ClientService {
             
             return { client, user: this.formatClientForResponse(user) };
         } catch (error) {
-            logger.error("Error approving access request:", error);
+            logger.error("Error approving access request, initiating manual rollback:", error);
+            
+            // Rollback User
+            if (user && user._id) {
+                try {
+                    await this.userRepository.deleteById(user._id);
+                    logger.info(`Rollback: Deleted user ${user.username}`);
+                } catch (rollbackUserErr) {
+                    logger.error("Rollback: Failed to delete user record:", rollbackUserErr);
+                }
+            }
+
+            // Rollback Client
+            if (client && client._id) {
+                try {
+                    await this.clientRepository.deleteById(client._id);
+                    logger.info(`Rollback: Deleted client ${client.name}`);
+                } catch (rollbackClientErr) {
+                    logger.error("Rollback: Failed to delete client record:", rollbackClientErr);
+                }
+            }
+
+            // Revert request status to pending
+            if (request && request.status === "approved") {
+                try {
+                    request.status = "pending";
+                    await request.save();
+                    logger.info(`Rollback: Reverted status to pending for request ${request._id}`);
+                } catch (rollbackRequestErr) {
+                    logger.error("Rollback: Failed to revert request status:", rollbackRequestErr);
+                }
+            }
+
             throw error;
         }
     }
