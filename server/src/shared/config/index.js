@@ -61,8 +61,7 @@ const config = {
         smtp_host: process.env.SMTP_HOST,
         smtp_port: parseInt(process.env.SMTP_PORT || 587, 10),
         smtp_user: process.env.SMTP_USER,
-        smtp_pass: process.env.SMTP_PASS,
-        email_from: process.env.EMAIL_FROM,
+        smtp_pass: process.env.SMTP_PASS
     },
 }
 export default config;
