@@ -36,7 +36,7 @@ class PostgresConnection{
                 password: config.postgres.password,
                 database: config.postgres.database,
                 ssl: 
-                    process.env.NODE_ENV === "production"
+                    process.env.NODE_ENV === "production" && process.env.PG_SSL !== "false"
                         ? { rejectUnauthorized: false }
                         : false,
                 max: 20, // Keep maximum of 20 concurrent connections in the pool
