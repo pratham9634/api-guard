@@ -12,9 +12,9 @@ Try the platform instantly — no setup required.
 
 > **Live Demo:** _[https://api-guard-one.vercel.app/](https://api-guard-one.vercel.app/)_
 
-| Role | Email | Password |
+| Role | Username | Password |
 | :--- | :--- | :--- |
-| 🟢 Client Admin | `user@gmail.com` | `user@12345678` |
+| 🟢 Client Admin | `user` | `user@12345678` |
 
 > **Super Admin** can manage all clients, approve onboarding requests, and view system-wide analytics.
 > **Client Admin** can manage their own organization's API keys, users, and analytics.
