@@ -143,7 +143,7 @@ graph TD
 > *Clean authentication screen with form validation and role-based redirect logic.*
 
 ### Onboarding / Access Request
-![Onboarding Screenshot](docs/screenshots/request.png)
+![Onboarding Screenshot](docs/screenshots/admin.png)
 > *Public sign-up form for new companies to request platform access.*
 
 ### Main Dashboard
@@ -152,6 +152,7 @@ graph TD
 
 ### Analytics Page
 ![Analytics Screenshot](docs/screenshots/analytics.png)
+![Analytics Screenshot](docs/screenshots/analytics2.jpeg)
 > *Interactive line charts and pie charts for time-bucketed request volume, error distribution, and top endpoints.*
 
 ### API Key Management
@@ -160,7 +161,7 @@ graph TD
 
 
 ### Access Requests (Super Admin)
-![Access Requests Screenshot](docs/screenshots/admin.png)
+![Access Requests Screenshot](docs/screenshots/request.png)
 > *Pending onboarding request queue with approve and reject actions.*
 
 ### API Integration Playground
