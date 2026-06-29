@@ -32,15 +32,14 @@ const logger = winston.createLogger({
     ],
 });
 
-// If running in development, write console logs
-if (process.env.NODE_ENV !== "production") {
-    logger.add(
-        new winston.transports.Console({
-            format: winston.format.combine(
-                winston.format.colorize(),
-                winston.format.simple()
-                )
-            }));
-}
+// Output console logs in all environments (essential for Docker and cloud PaaS dashboards like Render)
+logger.add(
+    new winston.transports.Console({
+        format: winston.format.combine(
+            winston.format.colorize(),
+            winston.format.simple()
+        )
+    })
+);
 
 export default logger;
