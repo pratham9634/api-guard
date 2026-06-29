@@ -10,12 +10,11 @@ API Guard is a full-stack, enterprise-grade platform that helps engineering team
 
 Try the platform instantly — no setup required.
 
-> **Live Demo:** _[Add your deployed URL here]_
+> **Live Demo:** _[https://api-guard-one.vercel.app/](https://api-guard-one.vercel.app/)_
 
 | Role | Email | Password |
 | :--- | :--- | :--- |
-| 🔴 Super Admin | `recruiter@example.com` | `Recruiter@123` |
-| 🟢 Client Admin | `user@example.com` | `User@123` |
+| 🟢 Client Admin | `user@gmail.com` | `user@12345678` |
 
 > **Super Admin** can manage all clients, approve onboarding requests, and view system-wide analytics.
 > **Client Admin** can manage their own organization's API keys, users, and analytics.
@@ -136,51 +135,41 @@ graph TD
 ## 📸 Screenshots
 
 ### Landing Page
-![Landing Page Screenshot]( )
+![Landing Page Screenshot](docs/screenshots/home.png)
 > *Public-facing marketing page with feature highlights, testimonials, and an onboarding CTA.*
 
 ### Login Page
-![Login Page Screenshot]( )
+![Login Page Screenshot](docs/screenshots/login.png)
 > *Clean authentication screen with form validation and role-based redirect logic.*
 
 ### Onboarding / Access Request
-![Onboarding Screenshot]( )
+![Onboarding Screenshot](docs/screenshots/request.png)
 > *Public sign-up form for new companies to request platform access.*
 
 ### Main Dashboard
-![Dashboard Screenshot]( )
+![Dashboard Screenshot](docs/screenshots/dashboard.jpeg)
 > *Overview panel with key metric cards showing total requests, active keys, error rate, and avg. latency.*
 
 ### Analytics Page
-![Analytics Screenshot]( )
+![Analytics Screenshot](docs/screenshots/analytics.png)
 > *Interactive line charts and pie charts for time-bucketed request volume, error distribution, and top endpoints.*
 
 ### API Key Management
-![API Keys Screenshot]( )
+![API Keys Screenshot](docs/screenshots/api.jpeg)
 > *Interface to generate, rotate, and revoke API keys with copy-to-clipboard functionality.*
 
-### Client Organizations (Super Admin)
-![Clients Screenshot]( )
-> *Super Admin panel listing all registered client organizations with creation dates and status.*
-
-### Client Detail (Super Admin)
-![Client Detail Screenshot]( )
-> *Deep-dive view into a single client's users, keys, and configuration.*
 
 ### Access Requests (Super Admin)
-![Access Requests Screenshot]( )
+![Access Requests Screenshot](docs/screenshots/admin.png)
 > *Pending onboarding request queue with approve and reject actions.*
 
 ### API Integration Playground
-![Playground Screenshot]( )
+![Playground Screenshot](docs/screenshots/playground.png)
 > *Live code snippet generator with cURL, JavaScript, Python, and Go examples using selected API keys.*
 
-### User Management
-![User Management Screenshot]( )
-> *Table view of all users within an organization with role management capabilities.*
 
 ### Profile Page
-![Profile Screenshot]( )
+![Profile Screenshot](docs/screenshots/profil.png)
 > *User profile editor for updating account details and changing passwords.*
 
 ---
